@@ -11,27 +11,33 @@
 	public:
 
 		Mutex()
-			: mySpinLock(0)
+			//: mySpinLock(0)
+			: mySysMutex(::CreateMutex(NULL, FALSE, NULL))
 		{
 		}
 
 		~Mutex()
 		{
+			CloseHandle(mySysMutex);
+			mySysMutex = NULL;
 		}
 
 		void
 		Lock()
 		{
-			while(_InterlockedCompareExchange(&mySpinLock, 1, 0)); 
+			//while(_InterlockedCompareExchange(&mySpinLock, 1, 0)); 
+			WaitForSingleObject(mySysMutex, INFINITE);
 		}
 
 		void 
 		Unlock()
 		{
-			_InterlockedExchange(&mySpinLock, 0); 
+			//_InterlockedExchange(&mySpinLock, 0); 
+			ReleaseMutex(mySysMutex);
 		}
 
-		volatile LONG	mySpinLock; 
+		//volatile LONG	mySpinLock; 
+		HANDLE mySysMutex;
 	};
 
 	class MutexLock

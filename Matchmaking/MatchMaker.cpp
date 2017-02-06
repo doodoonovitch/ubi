@@ -3,6 +3,7 @@
 #include "MatchMaker.h"
 
 #include <algorithm>
+#include <numeric>
 #include <math.h>
 
 	MatchMaker::MatchMaker()
@@ -21,6 +22,20 @@
 		return *instance; 
 	}
 
+	MatchMaker::Player* MatchMaker::FindPlayer(unsigned int	aPlayerId) const
+	{
+		for (auto i = 0; i < myNumPlayers; i++)
+		{
+			Player* p = myPlayers[i];
+			if (p->myPlayerId == aPlayerId)
+			{
+				return p;
+			}
+		}
+
+		return nullptr;
+	}
+
 	bool
 	MatchMaker::AddUpdatePlayer(
 		unsigned int	aPlayerId, 
@@ -28,31 +43,40 @@
 	{
 		MutexLock lock(myLock); 
 
-		for(unsigned int i = 0; i < myNumPlayers; i++)
+		Player* p = FindPlayer(aPlayerId);
+		if (p != nullptr)
 		{
-			if(myPlayers[i]->myPlayerId == aPlayerId)
-			{
-				Player* t = new Player(); 
-				t->myPlayerId = myPlayers[i]->myPlayerId; 
-				t->myIsAvailable = myPlayers[i]->myIsAvailable; 
-				for(int j = 0; j < 20; j++)
-					t->myPreferenceVector[j] = aPreferenceVector[j]; 
-
-				delete myPlayers[i]; 
-				myPlayers[i] = t; 
-
-				return true; 
-			}
+			p->SetPreferences(aPreferenceVector);
+			return true;
 		}
+
+		//for(unsigned int i = 0; i < myNumPlayers; i++)
+		//{
+		//	if(myPlayers[i]->myPlayerId == aPlayerId)
+		//	{
+		//		Player* t = new Player(); 
+		//		t->myPlayerId = myPlayers[i]->myPlayerId; 
+		//		t->myIsAvailable = myPlayers[i]->myIsAvailable; 
+
+		//		for(int j = 0; j < 20; j++)
+		//			t->myPreferenceVector[j] = aPreferenceVector[j]; 
+
+		//		delete myPlayers[i]; 
+		//		myPlayers[i] = t; 
+
+		//		return true; 
+		//	}
+		//}
 
 		if(myNumPlayers == MAX_NUM_PLAYERS)
 			return false; 
 
-		myPlayers[myNumPlayers] = new Player(); 
-		myPlayers[myNumPlayers]->myPlayerId = aPlayerId; 
-		for(int i = 0; i < 20; i++)
-			myPlayers[myNumPlayers]->myPreferenceVector[i] = aPreferenceVector[i]; 
-		myPlayers[myNumPlayers]->myIsAvailable = false; 
+		myPlayers[myNumPlayers] = new Player(aPlayerId, aPreferenceVector, false); 
+		//myPlayers[myNumPlayers] = new Player();
+		//myPlayers[myNumPlayers]->myPlayerId = aPlayerId; 
+		//for(int i = 0; i < 20; i++)
+		//	myPlayers[myNumPlayers]->myPreferenceVector[i] = aPreferenceVector[i]; 
+		//myPlayers[myNumPlayers]->myIsAvailable = false; 
 
 		myNumPlayers++; 
 
@@ -68,22 +92,30 @@
 	{
 		MutexLock lock(myLock); 
 
-		for(unsigned int i = 0; i < myNumPlayers; i++)
+		Player* p = FindPlayer(aPlayerId);
+		if (p != nullptr)
 		{
-			if(myPlayers[i]->myPlayerId == aPlayerId)
-			{
-				Player* t = new Player(); 
-				t->myPlayerId = myPlayers[i]->myPlayerId; 
-				t->myIsAvailable = true; 
-				for(int j = 0; j < 20; j++)
-					t->myPreferenceVector[j] = myPlayers[i]->myPreferenceVector[j]; 
-
-				delete myPlayers[i]; 
-				myPlayers[i] = t; 
-
-				return true; 
-			}
+			p->myIsAvailable = true;
+			return true;
 		}
+
+
+		//for(unsigned int i = 0; i < myNumPlayers; i++)
+		//{
+		//	if(myPlayers[i]->myPlayerId == aPlayerId)
+		//	{
+		//		Player* t = new Player(); 
+		//		t->myPlayerId = myPlayers[i]->myPlayerId; 
+		//		t->myIsAvailable = true; 
+		//		for(int j = 0; j < 20; j++)
+		//			t->myPreferenceVector[j] = myPlayers[i]->myPreferenceVector[j]; 
+
+		//		delete myPlayers[i]; 
+		//		myPlayers[i] = t; 
+
+		//		return true; 
+		//	}
+		//}
 
 		return false; 
 	}
@@ -94,22 +126,29 @@
 	{
 		MutexLock lock(myLock); 
 
-		for(unsigned int i = 0; i < myNumPlayers; i++)
+		Player* p = FindPlayer(aPlayerId);
+		if (p != nullptr)
 		{
-			if(myPlayers[i]->myPlayerId == aPlayerId)
-			{
-				Player* t = new Player(); 
-				t->myPlayerId = myPlayers[i]->myPlayerId; 
-				t->myIsAvailable = false; 
-				for(int j = 0; j < 20; j++)
-					t->myPreferenceVector[j] = myPlayers[i]->myPreferenceVector[j]; 
-
-				delete myPlayers[i]; 
-				myPlayers[i] = t; 
-
-				return true; 
-			}
+			p->myIsAvailable = false;
+			return true;
 		}
+
+		//for(unsigned int i = 0; i < myNumPlayers; i++)
+		//{
+		//	if(myPlayers[i]->myPlayerId == aPlayerId)
+		//	{
+		//		Player* t = new Player(); 
+		//		t->myPlayerId = myPlayers[i]->myPlayerId; 
+		//		t->myIsAvailable = false; 
+		//		for(int j = 0; j < 20; j++)
+		//			t->myPreferenceVector[j] = myPlayers[i]->myPreferenceVector[j]; 
+
+		//		delete myPlayers[i]; 
+		//		myPlayers[i] = t; 
+
+		//		return true; 
+		//	}
+		//}
 
 		return false; 
 	}
@@ -119,30 +158,38 @@
 		float	aA[20], 
 		float	aB[20])
 	{
-		float dist = 0.0f; 
-		for(int i = 0; i < 20; i++)
-			dist += pow((aA[i] - aB[i]), 2.0f); 
+		//float dist = 0.0f; 
+		//for(int i = 0; i < 20; i++)
+		//	dist += pow((aA[i] - aB[i]), 2.0f); 
 
-		return sqrt(dist); 
+		//return sqrt(dist); 
+		float dist2 = std::inner_product(aA, aA + 20, aB, 0.f);
+		return dist2;
 	}
 
 	class Matched
 	{
 	public:
 
+		Matched()
+			: myDist(-1.f)
+			, myId(-1)
+		{ }
+
 		float			myDist; 
 		unsigned int	myId; 
 	};
 
-	static int 
+	static bool 
 	MatchComp(
 		Matched*	aA, 
 		Matched*	aB)
 	{
-		if(aA->myDist < aB->myDist)
-			return 1; 
+		return (aA->myDist < aB->myDist);
+		//if(aA->myDist < aB->myDist)
+		//	return 1; 
 
-		return 0; 
+		//return 0; 
 	}
 
 	bool
@@ -153,20 +200,22 @@
 	{
 		MutexLock lock(myLock); 
 
-		Player* playerToMatch = NULL; 
-		for(unsigned int i = 0; i < myNumPlayers; i++)
-		{
-			if(myPlayers[i]->myPlayerId == aPlayerId)
-			{
-				playerToMatch					= new Player();
-				playerToMatch->myPlayerId		= myPlayers[i]->myPlayerId;
-				playerToMatch->myIsAvailable	= myPlayers[i]->myIsAvailable; 
-				for(int j = 0; j < 20; j++)
-					playerToMatch->myPreferenceVector[j] = myPlayers[i]->myPreferenceVector[j]; 
+		//Player* playerToMatch = NULL; 
+		//for(unsigned int i = 0; i < myNumPlayers; i++)
+		//{
+		//	if(myPlayers[i]->myPlayerId == aPlayerId)
+		//	{
+		//		playerToMatch					= new Player();
+		//		playerToMatch->myPlayerId		= myPlayers[i]->myPlayerId;
+		//		playerToMatch->myIsAvailable	= myPlayers[i]->myIsAvailable; 
+		//		for(int j = 0; j < 20; j++)
+		//			playerToMatch->myPreferenceVector[j] = myPlayers[i]->myPreferenceVector[j]; 
 
-				break; 
-			}
-		}
+		//		break; 
+		//	}
+		//}
+
+		const Player* playerToMatch = FindPlayer(aPlayerId);
 
 		if(!playerToMatch)
 			return false; 
@@ -175,13 +224,13 @@
 		for(unsigned int i = 0; i < 20; i++)
 		{
 			matched[i]			= new Matched(); 
-			matched[i]->myDist	= -1.0f; 
-			matched[i]->myId	= -1; 
+			//matched[i]->myDist	= -1.0f; 
+			//matched[i]->myId	= -1; 
 		}
 
 		int matchCount = 0; 
 
-		for(unsigned int i = 0; i < myNumPlayers; i++)
+		for(auto i = 0; i < myNumPlayers; i++)
 		{
 			if(matchCount < 20)
 			{
@@ -226,14 +275,14 @@
 		}
 
 		aOutNumPlayerIds = matchCount; 
-		for(unsigned int j = 0; j < matchCount; j++)
+		for(auto j = 0; j < matchCount; j++)
 			aPlayerIds[j] = matched[j]->myId; 
 
 		for(unsigned int i = 0; i < 20; i++)
 			delete matched[i]; 
 		delete [] matched; 
 
-		delete playerToMatch; 
+		//delete playerToMatch; 
 
 		return true; 
 	}

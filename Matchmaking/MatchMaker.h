@@ -35,9 +35,16 @@ private:
 	{
 	public:
 
-		Player()
+		Player(
+			unsigned int	aPlayerId,
+			float			aPreferenceVector[20],
+			bool			aIsAvailable
+		)
+			: myPlayerId(aPlayerId)
+			, myPreferenceVector(new float[20])
+			, myIsAvailable(aIsAvailable)
 		{
-			myPreferenceVector = new float[20]; 
+			SetPreferences(aPreferenceVector);
 		}
 
 		~Player()
@@ -45,10 +52,21 @@ private:
 			delete [] myPreferenceVector; 
 		}
 
+		void SetPreferences(
+			float aPreferenceVector[20])
+		{
+			memcpy(myPreferenceVector, aPreferenceVector, sizeof(myPreferenceVector));
+		}
+
 		unsigned int	myPlayerId; 
 		float*			myPreferenceVector; 
 		bool			myIsAvailable; 
 	};
+
+
+	Player*				FindPlayer(
+							unsigned int	aPlayerId) const;
+
 
 	Mutex				myLock; 
 	int					myNumPlayers; 
