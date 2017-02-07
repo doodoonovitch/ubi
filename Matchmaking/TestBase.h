@@ -3,8 +3,10 @@
 
 #include <vector>
 
-namespace Test
+class Test
 {
+public:
+
 	static const int			TestPerThreadCount = 2;
 	static const unsigned int	TestThreadCount = 16;
 
@@ -23,6 +25,12 @@ namespace Test
 		unsigned int	myResultIds[20];
 		int				myNumPlayers;
 	};
+
+	static bool			IsEqual(
+							int				aThreadIndex,
+							int				aTestIndex,
+							const TestResult & a, 
+							const TestResult & b);
 };
 
 
