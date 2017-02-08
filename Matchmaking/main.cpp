@@ -4,6 +4,7 @@
 #include "TestBase.h"
 
 #include <string>
+#include <algorithm>
 
 	class QPTimer 
 	{
@@ -201,9 +202,21 @@ namespace
 			Test::TestResult result;
 			result.myPlayerId = player->myPlayerId;
 
-			ScopedQPTimer timer("matching time in milliseconds");
-			MatchMaker::GetInstance().MatchMake(result.myPlayerId, result.myResultIds, result.myNumPlayers);
+			memset(result.myResultIds, -1, sizeof(result.myResultIds));
+			{
+				ScopedQPTimer timer("matching time in milliseconds");
+				MatchMaker::GetInstance().MatchMake(result.myPlayerId, result.myResultIds, result.myNumPlayers);
+			}
 
+			using std::sort;
+			if (result.myNumPlayers > 0)
+			{
+				sort(result.myResultIds, result.myResultIds + result.myNumPlayers);
+			}
+			if (expectedResult->myNumPlayers > 0)
+			{
+				sort(expectedResult->myResultIds, expectedResult->myResultIds + expectedResult->myNumPlayers);
+			}
 			Test::IsEqual(testSampleId, testSample, result, *expectedResult);
 		}
 #else
@@ -237,8 +250,10 @@ namespace
 			unsigned int ids[20]; 
 			int numPlayers; 
 
-			ScopedQPTimer timer("matching time in milliseconds"); 
-			MatchMaker::GetInstance().MatchMake(playerId, ids, numPlayers); 
+			{
+				ScopedQPTimer timer("matching time in milliseconds");
+				MatchMaker::GetInstance().MatchMake(playerId, ids, numPlayers);
+			}
 
 	#ifdef GENERATE_TEST_SAMPLE
 			generateTestSamples.GenerateTestResult(testSampleId, playerId, preferenceVector, offLineProbability, ids, numPlayers);

@@ -52,8 +52,8 @@ private:
 			delete [] myPreferenceVector; 
 		}
 
-		void SetPreferences(
-			float aPreferenceVector[20])
+		void			SetPreferences(
+							float aPreferenceVector[20])
 		{
 			memcpy(myPreferenceVector, aPreferenceVector, sizeof(float[20]));
 		}
