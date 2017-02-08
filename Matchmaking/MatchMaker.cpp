@@ -185,6 +185,9 @@
 		{
 			if(matchCount < 20)
 			{
+				if (!myPlayers[i]->myIsAvailable)
+					continue;
+
 				matched[matchCount]->myId	= myPlayers[i]->myPlayerId; 
 				matched[matchCount]->myDist	= Dist(myPlayers[i]->myPreferenceVector, playerToMatch->myPreferenceVector);
 				matchCount++; 

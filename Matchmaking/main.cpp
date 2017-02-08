@@ -93,7 +93,7 @@
 	#define TEST_SUITE_PREFIX_1 "SRand_"
 #endif // USE_PREDICTABLE_RANDOMNESS
 
-//#define PLAYER_COUNT_5K
+#define PLAYER_COUNT_5K
 #ifdef PLAYER_COUNT_5K
 	#define PLAYER_COUNT 5000;
 	#define TEST_SUITE_PREFIX_2 "5K_"
@@ -112,7 +112,7 @@
 	#include "GenerateTestSamples.h"
 	static GenerateTestSamples generateTestSamples(TEST_SUITE_PREFIX_1 TEST_SUITE_PREFIX_2 "TestSuite");
 #else
-	//#define USE_TEST_SUITES
+	#define USE_TEST_SUITES
 	#ifdef USE_TEST_SUITES
 
 	#ifdef USE_PREDICTABLE_RANDOMNESS
@@ -193,7 +193,7 @@ namespace
 
 			MatchMaker::GetInstance().AddUpdatePlayer(player->myPlayerId, player->myPreferenceVector);
 
-			if (player->myOnlineProbability < 0.05f)
+			if (player->myOffLineProbability < 0.05f)
 				MatchMaker::GetInstance().SetPlayerAvailable(player->myPlayerId);
 			else
 				MatchMaker::GetInstance().SetPlayerUnavailable(player->myPlayerId);
@@ -227,8 +227,8 @@ namespace
 			MatchMaker::GetInstance().AddUpdatePlayer(playerId, preferenceVector); 
 
 			// players goes on-line / off-line all the time 
-			float onlineProbability = RandomFloat32();
-			if(onlineProbability < 0.05f)
+			float offLineProbability = RandomFloat32();
+			if(offLineProbability < 0.05f)
 				MatchMaker::GetInstance().SetPlayerAvailable(playerId); 
 			else 
 				MatchMaker::GetInstance().SetPlayerUnavailable(playerId); 
@@ -241,7 +241,7 @@ namespace
 			MatchMaker::GetInstance().MatchMake(playerId, ids, numPlayers); 
 
 	#ifdef GENERATE_TEST_SAMPLE
-			generateTestSamples.GenerateTestResult(testSampleId, playerId, preferenceVector, onlineProbability, ids, numPlayers);
+			generateTestSamples.GenerateTestResult(testSampleId, playerId, preferenceVector, offLineProbability, ids, numPlayers);
 	#endif // GENERATE_TEST_SAMPLE
 		}
 
@@ -298,6 +298,10 @@ int main(int argc, char* argv[])
 	{
 		Test::PlayerData & player = mainDataSample[i];
 		MatchMaker::GetInstance().AddUpdatePlayer(player.myPlayerId, player.myPreferenceVector);
+		if (player.myOffLineProbability < 0.05f)
+			MatchMaker::GetInstance().SetPlayerAvailable(player.myPlayerId);
+		else
+			MatchMaker::GetInstance().SetPlayerUnavailable(player.myPlayerId);
 	}
 
 #else
@@ -311,11 +315,18 @@ int main(int argc, char* argv[])
 
 		unsigned int playerId = RandomUInt32() % PlayerCount;
 
+		// players goes on-line / off-line all the time 
+		float offLineProbability = RandomFloat32();
+
 #ifdef GENERATE_TEST_SAMPLE
-		generateTestSamples.GenerateMainDataItem(playerId, preferenceVector, 1.f);
+		generateTestSamples.GenerateMainDataItem(playerId, preferenceVector, offLineProbability);
 #endif // GENERATE_TEST_SAMPLE
 
 		MatchMaker::GetInstance().AddUpdatePlayer(playerId, preferenceVector); 
+		if (offLineProbability < 0.05f)
+			MatchMaker::GetInstance().SetPlayerAvailable(playerId);
+		else
+			MatchMaker::GetInstance().SetPlayerUnavailable(playerId);
 	}
 
 #endif // USE_TEST_SUITES
