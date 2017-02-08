@@ -4,6 +4,8 @@
 #define MAX_NUM_PLAYERS (1000000)
 
 #include "Mutex.h"
+#include <map>
+
 
 class MatchMaker
 {
@@ -63,6 +65,7 @@ private:
 		bool			myIsAvailable; 
 	};
 
+	typedef std::map<unsigned int, Player*> PlayerMap;
 
 	Player*				FindPlayer(
 							unsigned int	aPlayerId) const;
@@ -70,7 +73,8 @@ private:
 
 	Mutex				myLock; 
 	int					myNumPlayers; 
-	Player*				myPlayers[MAX_NUM_PLAYERS]; 
+	PlayerMap			myPlayersMap;
+	Player*				myPlayers[MAX_NUM_PLAYERS];
 
 						MatchMaker(); 
 

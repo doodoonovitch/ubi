@@ -10,6 +10,7 @@
 	MatchMaker::MatchMaker()
 		: myNumPlayers(0)
 	{
+		
 	}
 
 	MatchMaker::~MatchMaker()
@@ -25,19 +26,15 @@
 
 	MatchMaker::Player* MatchMaker::FindPlayer(unsigned int	aPlayerId) const
 	{
-		Player* const * iterPlayers = myPlayers;
-		Player* const * endPlayers = myPlayers + myNumPlayers;
-
-		for (; iterPlayers < endPlayers; ++iterPlayers)
+		PlayerMap::const_iterator iter = myPlayersMap.find(aPlayerId);
+		if (iter == myPlayersMap.end())
 		{
-			Player* p = *iterPlayers;
-			if (p->myPlayerId == aPlayerId)
-			{
-				return p;
-			}
+			return nullptr;
 		}
-
-		return nullptr;
+		else
+		{
+			return iter->second;
+		}			
 	}
 
 	bool
@@ -54,12 +51,14 @@
 			return true;
 		}
 
-		if(myNumPlayers == MAX_NUM_PLAYERS)
-			return false; 
+		if (myNumPlayers == MAX_NUM_PLAYERS)
+			return false;
 
-		myPlayers[myNumPlayers] = new Player(aPlayerId, aPreferenceVector, false); 
+		p = new Player(aPlayerId, aPreferenceVector, false);
+		myPlayers[myNumPlayers] = p;
+		myPlayersMap[aPlayerId] = p;
 
-		++myNumPlayers; 
+		++myNumPlayers;
 
 		return true; 
 	}
@@ -198,11 +197,11 @@
 				if(matched[j]->myDist <= dist)
 					break; 
 
-				index = j; 
+				index = j;
 			}
 
-			if(index == -1)
-				continue; 
+			if (index == -1)
+				continue;
 
 			Matched* newItem = matched[19];
 			newItem->myDist = dist;
