@@ -5,6 +5,8 @@
 
 #include "Mutex.h"
 
+#include <algorithm>
+
 class MatchMaker
 {
 public:
@@ -63,6 +65,85 @@ private:
 		bool			myIsAvailable; 
 	};
 
+	class Matched
+	{
+	public:
+
+		Matched()
+			: myDist(-1.f)
+			, myId(-1)
+		{
+		}
+
+		float			myDist;
+		unsigned int	myId;
+	};
+
+	static bool
+		MatchComp(
+			Matched*	aA,
+			Matched*	aB)
+	{
+		return (aA->myDist < aB->myDist);
+	}
+
+
+	class MatchedBinHeap
+	{
+
+	public:
+
+		static const unsigned int MaxCapacity = 20;
+
+		MatchedBinHeap(
+			unsigned int	aCapacity = MaxCapacity)
+			: myCapacity(aCapacity)
+			, mySize(0)
+		{
+			for (unsigned int i = 0; i < myCapacity; ++i)
+			{
+				myArray[i] = &myStorage[i];
+			}
+		}
+
+		void AddItem(
+			unsigned int	aId,
+			float			aDist)
+		{
+			if (mySize < myCapacity)
+			{
+				Matched* item = myArray[mySize];
+				++mySize;
+
+				item->myId = aId;
+				item->myDist = aDist;
+
+				std::push_heap(myArray, myArray + mySize);
+			}
+			else
+			{
+				Matched * currBiggest = myArray[0];
+				if (currBiggest->myDist < aDist)
+					return;
+
+				std::pop_heap(myArray, myArray + mySize);
+
+				Matched* item = myArray[mySize - 1];
+				item->myId = aId;
+				item->myDist = aDist;
+
+				std::push_heap(myArray, myArray + mySize);
+			}
+		}
+
+	private:
+
+		unsigned int	myCapacity;
+		unsigned int	mySize;
+		Matched			myStorage[MaxCapacity];
+		Matched*		myArray[MaxCapacity];
+
+	};
 
 	Player*				FindPlayer(
 							unsigned int	aPlayerId) const;

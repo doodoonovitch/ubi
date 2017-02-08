@@ -121,26 +121,26 @@
 		return dist2;
 	}
 
-	class Matched
-	{
-	public:
+	//class Matched
+	//{
+	//public:
 
-		Matched()
-			: myDist(-1.f)
-			, myId(-1)
-		{ }
+	//	Matched()
+	//		: myDist(-1.f)
+	//		, myId(-1)
+	//	{ }
 
-		float			myDist; 
-		unsigned int	myId; 
-	};
+	//	float			myDist; 
+	//	unsigned int	myId; 
+	//};
 
-	static bool 
-	MatchComp(
-		Matched*	aA, 
-		Matched*	aB)
-	{
-		return (aA->myDist < aB->myDist);
-	}
+	//static bool 
+	//MatchComp(
+	//	Matched*	aA, 
+	//	Matched*	aB)
+	//{
+	//	return (aA->myDist < aB->myDist);
+	//}
 
 	bool
 	MatchMaker::MatchMake(
