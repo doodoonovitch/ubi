@@ -192,7 +192,7 @@
 			int index = -1; 
 			for(int j = 19; j >= 0; --j)
 			{
-				if(matched[j]->myDist < dist)
+				if(matched[j]->myDist <= dist)
 					break; 
 
 				index = j; 
