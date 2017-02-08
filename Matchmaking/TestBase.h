@@ -15,7 +15,7 @@ public:
 	public:
 		unsigned int	myPlayerId;
 		float			myPreferenceVector[20];
-		float			myOnlineProbability;
+		float			myOffLineProbability;
 	};
 
 	class TestResult

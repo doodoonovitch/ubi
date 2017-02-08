@@ -251,6 +251,8 @@
 		int playerIndex;
 		for (playerIndex = 0; playerIndex < myNumPlayers && playerIndex < 20; playerIndex++)
 		{
+				if (!myPlayers[playerIndex]->myIsAvailable)
+					continue;
 				matched[matchCount]->myId = myPlayers[playerIndex]->myPlayerId;
 				matched[matchCount]->myDist = Dist(myPlayers[playerIndex]->myPreferenceVector, playerToMatch->myPreferenceVector);
 				matchCount++;
