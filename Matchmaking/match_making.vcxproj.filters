@@ -1,0 +1,419 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="GenerateTestSamples.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="MatchMaker.cpp" />
+    <ClCompile Include="stdafx.cpp" />
+    <ClCompile Include="TestBase.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="GenerateTestSamples.h" />
+    <ClInclude Include="MatchMaker.h" />
+    <ClInclude Include="Mutex.h" />
+    <ClInclude Include="stdafx.h" />
+    <ClInclude Include="targetver.h" />
+    <ClInclude Include="TestBase.h" />
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_MainData.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_PlayerData_0.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_PlayerData_1.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_PlayerData_2.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_PlayerData_3.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_PlayerData_4.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_PlayerData_5.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_PlayerData_6.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_PlayerData_7.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_PlayerData_8.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_PlayerData_9.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_PlayerData_10.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_PlayerData_11.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_PlayerData_12.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_PlayerData_13.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_PlayerData_14.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_PlayerData_15.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_Results_0.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_Results_1.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_Results_2.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_Results_3.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_Results_4.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_Results_5.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_Results_6.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_Results_7.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_Results_8.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_Results_9.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_Results_10.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_Results_11.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_Results_12.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_Results_13.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_Results_14.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_5K_TestSuite_Results_15.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_MainData.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_PlayerData_0.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_PlayerData_1.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_PlayerData_2.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_PlayerData_3.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_PlayerData_4.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_PlayerData_5.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_PlayerData_6.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_PlayerData_7.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_PlayerData_8.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_PlayerData_9.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_PlayerData_10.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_PlayerData_11.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_PlayerData_12.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_PlayerData_13.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_PlayerData_14.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_PlayerData_15.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_Results_0.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_Results_1.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_Results_2.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_Results_3.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_Results_4.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_Results_5.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_Results_6.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_Results_7.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_Results_8.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_Results_9.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_Results_10.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_Results_11.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_Results_12.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_Results_13.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_Results_14.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\Rand_100K_TestSuite_Results_15.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_MainData.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_PlayerData_0.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_PlayerData_1.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_PlayerData_2.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_PlayerData_3.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_PlayerData_4.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_PlayerData_5.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_PlayerData_6.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_PlayerData_7.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_PlayerData_8.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_PlayerData_9.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_PlayerData_10.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_PlayerData_11.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_PlayerData_12.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_PlayerData_13.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_PlayerData_14.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_PlayerData_15.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_Results_0.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_Results_1.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_Results_2.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_Results_3.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_Results_4.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_Results_5.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_Results_6.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_Results_7.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_Results_8.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_Results_9.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_Results_10.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_Results_11.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_Results_12.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_Results_13.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_Results_14.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_5K_TestSuite_Results_15.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_MainData.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_PlayerData_0.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_PlayerData_1.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_PlayerData_2.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_PlayerData_3.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_PlayerData_4.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_PlayerData_5.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_PlayerData_6.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_PlayerData_7.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_PlayerData_8.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_PlayerData_9.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_PlayerData_10.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_PlayerData_11.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_PlayerData_12.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_PlayerData_13.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_PlayerData_14.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_PlayerData_15.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_Results_0.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_Results_1.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_Results_2.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_Results_3.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_Results_4.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_Results_5.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_Results_6.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_Results_7.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_Results_8.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_Results_9.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_Results_10.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_Results_11.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_Results_12.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_Results_13.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_Results_14.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+    <ClInclude Include="TestSamples\SRand_100K_TestSuite_Results_15.h">
+      <Filter>TestSamples</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="TestSamples">
+      <UniqueIdentifier>{7d4934a4-cf42-4bfe-aa0d-7f1952b72214}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
