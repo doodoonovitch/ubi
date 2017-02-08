@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <numeric>
+#include <functional>
 #include <math.h>
 
 	MatchMaker::MatchMaker()
@@ -162,8 +163,23 @@
 		//for(int i = 0; i < 20; i++)
 		//	dist += pow((aA[i] - aB[i]), 2.0f); 
 
-		//return sqrt(dist); 
-		float dist2 = std::inner_product(aA, aA + 20, aB, 0.f);
+		////return sqrt(dist); 
+		//return dist;
+
+		//float dist2 = std::inner_product(aA, aA + 20, aB, 0.f, std::plus<float>(), [](float a, float b) 
+		//{
+		//	float res = a - b;
+		//	res *= res;
+		//	return res;
+		//});
+		float dist2 = 0.f;
+		for (auto i = 0; i < 20; ++i)
+		{
+			float d2 = aA[i] - aB[i];
+			d2 *= d2;
+			dist2 += d2;
+		}
+
 		return dist2;
 	}
 
@@ -220,31 +236,48 @@
 		if(!playerToMatch)
 			return false; 
 
-		Matched** matched = new Matched*[20]; 
+		//Matched* matched = new Matched*[20]; 
+		Matched matchedItems[20];
+		Matched* matched[20];
 		for(unsigned int i = 0; i < 20; i++)
 		{
-			matched[i]			= new Matched(); 
+			matched[i] = &matchedItems[i];
+			//matched[i]			= new Matched(); 
 			//matched[i]->myDist	= -1.0f; 
 			//matched[i]->myId	= -1; 
 		}
 
 		int matchCount = 0; 
-
-		for(auto i = 0; i < myNumPlayers; i++)
+		int playerIndex;
+		for (playerIndex = 0; playerIndex < myNumPlayers && playerIndex < 20; playerIndex++)
 		{
-			if(matchCount < 20)
-			{
-				matched[matchCount]->myId	= myPlayers[i]->myPlayerId; 
-				matched[matchCount]->myDist	= Dist(myPlayers[i]->myPreferenceVector, playerToMatch->myPreferenceVector);
-				matchCount++; 
+				matched[matchCount]->myId = myPlayers[playerIndex]->myPlayerId;
+				matched[matchCount]->myDist = Dist(myPlayers[playerIndex]->myPreferenceVector, playerToMatch->myPreferenceVector);
+				matchCount++;
 
-				using std::sort; 
-				sort(matched, matched + matchCount, MatchComp);
+		}
 
-				continue; 
-			}
+		using std::sort;
+		sort(matched, matched + matchCount, MatchComp);
 
-			float dist = Dist(playerToMatch->myPreferenceVector, myPlayers[i]->myPreferenceVector); 
+		for(/*auto playerIndex = 0*/; playerIndex < myNumPlayers; playerIndex++)
+		{
+			//if(matchCount < 20)
+			//{
+			//	matched[matchCount]->myId	= myPlayers[playerIndex]->myPlayerId; 
+			//	matched[matchCount]->myDist	= Dist(myPlayers[playerIndex]->myPreferenceVector, playerToMatch->myPreferenceVector);
+			//	matchCount++; 
+
+			//	using std::sort; 
+			//	sort(matched, matched + matchCount, MatchComp);
+
+			//	continue; 
+			//}
+
+			if (!myPlayers[playerIndex]->myIsAvailable)
+				continue;
+
+			float dist = Dist(playerToMatch->myPreferenceVector, myPlayers[playerIndex]->myPreferenceVector);
 
 			int index = -1; 
 			for(int j = 19; j >= 0; j--)
@@ -258,9 +291,6 @@
 			if(index == -1)
 				continue; 
 
-			if(!myPlayers[i]->myIsAvailable)
-				continue; 
-
 			for(int j = 19; j > index; j--)
 			{
 				matched[j]->myDist	= matched[j - 1]->myDist; 
@@ -268,7 +298,7 @@
 			}
 
 			matched[index]->myDist	= dist;
-			matched[index]->myId	= myPlayers[i]->myPlayerId; 
+			matched[index]->myId	= myPlayers[playerIndex]->myPlayerId;
 
 			for(int j = 0; j < 20; j++)
 				aPlayerIds[j] = matched[j]->myId; 
@@ -278,9 +308,9 @@
 		for(auto j = 0; j < matchCount; j++)
 			aPlayerIds[j] = matched[j]->myId; 
 
-		for(unsigned int i = 0; i < 20; i++)
-			delete matched[i]; 
-		delete [] matched; 
+		//for(unsigned int i = 0; i < 20; i++)
+		//	delete matched[i]; 
+		//delete [] matched; 
 
 		//delete playerToMatch; 
 

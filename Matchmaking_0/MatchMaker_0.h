@@ -3,7 +3,7 @@
 
 #define MAX_NUM_PLAYERS (1000000)
 
-#include "Mutex.h"
+#include "Mutex_0.h"
 
 class MatchMaker
 {
@@ -35,16 +35,9 @@ private:
 	{
 	public:
 
-		Player(
-			unsigned int	aPlayerId,
-			float			aPreferenceVector[20],
-			bool			aIsAvailable
-		)
-			: myPlayerId(aPlayerId)
-			, myPreferenceVector(new float[20])
-			, myIsAvailable(aIsAvailable)
+		Player()
 		{
-			SetPreferences(aPreferenceVector);
+			myPreferenceVector = new float[20]; 
 		}
 
 		~Player()
@@ -52,21 +45,10 @@ private:
 			delete [] myPreferenceVector; 
 		}
 
-		void SetPreferences(
-			float aPreferenceVector[20])
-		{
-			memcpy(myPreferenceVector, aPreferenceVector, sizeof(float[20]));
-		}
-
 		unsigned int	myPlayerId; 
 		float*			myPreferenceVector; 
 		bool			myIsAvailable; 
 	};
-
-
-	Player*				FindPlayer(
-							unsigned int	aPlayerId) const;
-
 
 	Mutex				myLock; 
 	int					myNumPlayers; 

@@ -6,6 +6,12 @@
     <ClCompile Include="MatchMaker.cpp" />
     <ClCompile Include="stdafx.cpp" />
     <ClCompile Include="TestBase.cpp" />
+    <ClCompile Include="..\Matchmaking_0\main_0.cpp">
+      <Filter>Original</Filter>
+    </ClCompile>
+    <ClCompile Include="..\Matchmaking_0\MatchMaker_0.cpp">
+      <Filter>Original</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GenerateTestSamples.h" />
@@ -410,10 +416,19 @@
     <ClInclude Include="TestSamples\SRand_100K_TestSuite_Results_15.h">
       <Filter>TestSamples</Filter>
     </ClInclude>
+    <ClInclude Include="..\Matchmaking_0\MatchMaker_0.h">
+      <Filter>Original</Filter>
+    </ClInclude>
+    <ClInclude Include="..\Matchmaking_0\Mutex_0.h">
+      <Filter>Original</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="TestSamples">
       <UniqueIdentifier>{7d4934a4-cf42-4bfe-aa0d-7f1952b72214}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Original">
+      <UniqueIdentifier>{86be3db9-93bb-43b2-ac18-083e51055eae}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
 </Project>
