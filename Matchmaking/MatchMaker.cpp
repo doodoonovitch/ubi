@@ -186,8 +186,7 @@
 		if(!playerToMatch)
 			return false; 
 
-		MatchedBinHeap matched[MaxThreadCount];
-		MatchedBinHeap & matched0 = *matched;
+		MatchedBinHeap & matched0 = *myMatched;
 
 		Player** iterPlayers = myPlayers;
 		Player** endPlayers = myPlayers + myNumPlayers;
@@ -198,13 +197,18 @@
 		for (taskIndex; taskIndex < n; ++taskIndex)
 		{
 			MatchMakeTask & task = myTaskStorage[taskIndex];
+			MatchedBinHeap & matched = myMatched[taskIndex];
+			matched.Reset();
+
 			Player** iterPlayersNext = iterPlayers + nbPlayerPerThread;
-			task.Reset(playerToMatch, &matched[taskIndex], iterPlayers, iterPlayersNext);
+			task.Reset(playerToMatch, &matched, iterPlayers, iterPlayersNext);
 			iterPlayers = iterPlayersNext;
 		}
 
 		MatchMakeTask & task = myTaskStorage[taskIndex];
-		task.Reset(playerToMatch, &matched[taskIndex], iterPlayers, endPlayers);
+		MatchedBinHeap & matched = myMatched[taskIndex];
+		matched.Reset();
+		task.Reset(playerToMatch, &matched, iterPlayers, endPlayers);
 
 		ReleaseSemaphore(myRunTaskSemaphore, myThreadCount, NULL);
 
@@ -212,13 +216,13 @@
 
 		for (unsigned int i = 1; i < myThreadCount; ++i)
 		{
-			matched[i].ForEach([&matched0](const Matched* item)
+			myMatched[i].ForEach([&matched0](const Matched* item)
 			{
 				matched0.AddItem(item->myId, item->myDist);
 			});
 		}
 
-		matched->Export(aPlayerIds, aOutNumPlayerIds);
+		matched0.Export(aPlayerIds, aOutNumPlayerIds);
 
 		return true; 
 	}

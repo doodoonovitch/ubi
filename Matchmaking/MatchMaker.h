@@ -154,6 +154,11 @@ private:
 			}
 		}
 
+		void Reset()
+		{
+			mySize = 0;
+		}
+
 	private:
 
 		unsigned int	myCapacity;
@@ -220,6 +225,7 @@ private:
 	MatchMakeTask*				myTaskStorage;
 	HANDLE						myRunTaskSemaphore;
 	HANDLE*						myWaitTaskEvents;
+	MatchedBinHeap				myMatched[MaxThreadCount];
 
 
 						MatchMaker(); 
