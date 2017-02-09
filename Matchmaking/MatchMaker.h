@@ -6,6 +6,8 @@
 #include "Mutex.h"
 
 #include <algorithm>
+#include <thread>
+#include <queue>
 
 class MatchMaker
 {
@@ -142,6 +144,16 @@ private:
 				aPlayerIds[j] = myArray[j]->myId;
 		}
 
+		void ForEach(std::function<void(const Matched* item)> func) const
+		{
+			Matched* const* iter = myArray;
+			Matched* const* end = myArray + mySize;
+			for (; iter < end; ++iter)
+			{
+				func(*iter);
+			}
+		}
+
 	private:
 
 		unsigned int	myCapacity;
@@ -150,13 +162,65 @@ private:
 		Matched*		myArray[MaxCapacity];
 	};
 
+
+	class MatchMakeTask
+	{
+	public:
+
+		MatchMakeTask();
+
+		~MatchMakeTask();
+
+		void Reset(
+			const Player*		aPlayerToMatch,
+			MatchedBinHeap*		aMatched,
+			Player**			aPlayersBeginIter,
+			Player**			aPlayersEndIter
+		);
+
+		HANDLE GetSynchEvent() const 
+		{ 
+			return mySyncEvent;
+		}
+
+		void Run();
+
+	private:
+
+
+		const Player*		myPlayerToMatch;
+		MatchedBinHeap*		myMatched;
+		Player**			myPlayersBeginIter;
+		Player**			myPlayersEndIter;
+		HANDLE				mySyncEvent;
+	};
+
+
 	Player*				FindPlayer(
 							unsigned int	aPlayerId) const;
+
+	static void			TaskHandler(
+							MatchMaker *	matchMaker, 
+							unsigned int	index);
+
+	void				RunTasks(
+							unsigned int	index);
+
 
 
 	Mutex				myLock; 
 	int					myNumPlayers; 
 	Player*				myPlayers[MAX_NUM_PLAYERS]; 
+
+
+	static const unsigned int	MaxThreadCount = 8;
+
+	unsigned int				myThreadCount;
+	std::thread*				myThreads;
+	MatchMakeTask*				myTaskStorage;
+	HANDLE						myRunTaskSemaphore;
+	HANDLE*						myWaitTaskEvents;
+
 
 						MatchMaker(); 
 
