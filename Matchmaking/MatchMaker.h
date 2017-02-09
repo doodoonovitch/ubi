@@ -118,7 +118,7 @@ private:
 				item->myId = aId;
 				item->myDist = aDist;
 
-				std::push_heap(myArray, myArray + mySize);
+				std::push_heap(myArray, myArray + mySize, MatchComp);
 			}
 			else
 			{
@@ -126,14 +126,23 @@ private:
 				if (currBiggest->myDist < aDist)
 					return;
 
-				std::pop_heap(myArray, myArray + mySize);
+				std::pop_heap(myArray, myArray + mySize, MatchComp);
 
 				Matched* item = myArray[mySize - 1];
 				item->myId = aId;
 				item->myDist = aDist;
 
-				std::push_heap(myArray, myArray + mySize);
+				std::push_heap(myArray, myArray + mySize, MatchComp);
 			}
+		}
+
+		void Export(
+			unsigned int	aPlayerIds[20],
+			int&			aOutNumPlayerIds)
+		{
+			aOutNumPlayerIds = mySize; 
+			for(unsigned int j = 0; j < mySize; ++j)
+				aPlayerIds[j] = myArray[j]->myId;
 		}
 
 	private:
@@ -142,7 +151,6 @@ private:
 		unsigned int	mySize;
 		Matched			myStorage[MaxCapacity];
 		Matched*		myArray[MaxCapacity];
-
 	};
 
 	Player*				FindPlayer(

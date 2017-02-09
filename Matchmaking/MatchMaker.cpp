@@ -121,27 +121,6 @@
 		return dist2;
 	}
 
-	//class Matched
-	//{
-	//public:
-
-	//	Matched()
-	//		: myDist(-1.f)
-	//		, myId(-1)
-	//	{ }
-
-	//	float			myDist; 
-	//	unsigned int	myId; 
-	//};
-
-	//static bool 
-	//MatchComp(
-	//	Matched*	aA, 
-	//	Matched*	aB)
-	//{
-	//	return (aA->myDist < aB->myDist);
-	//}
-
 	bool
 	MatchMaker::MatchMake(
 		unsigned int	aPlayerId, 
@@ -155,31 +134,10 @@
 		if(!playerToMatch)
 			return false; 
 
-		Matched matchedItems[20];
-		Matched* matched[20];
-		for(unsigned int i = 0; i < 20; ++i)
-		{
-			matched[i] = &matchedItems[i];
-		}
-
-		int matchCount = 0; 
+		MatchedBinHeap matched;
 
 		Player** iterPlayers = myPlayers;
 		Player** endPlayers = myPlayers + myNumPlayers;
-
-		for (; iterPlayers < endPlayers && matchCount < 20; ++iterPlayers)
-		{
-			Player * player = *iterPlayers;
-			if (!player->myIsAvailable)
-				continue;
-			matched[matchCount]->myId = player->myPlayerId;
-			matched[matchCount]->myDist = Dist(player->myPreferenceVector, playerToMatch->myPreferenceVector);
-			++matchCount;
-
-		}
-
-		using std::sort;
-		sort(matched, matched + matchCount, MatchComp);
 
 		for(; iterPlayers < endPlayers; ++iterPlayers)
 		{
@@ -188,35 +146,10 @@
 				continue;
 
 			float dist = Dist(playerToMatch->myPreferenceVector, player->myPreferenceVector);
-
-			int index = -1; 
-			for(int j = 19; j >= 0; --j)
-			{
-				if(matched[j]->myDist < dist)
-					break; 
-
-				index = j; 
-			}
-
-			if(index == -1)
-				continue; 
-
-			for(int j = 19; j > index; --j)
-			{
-				matched[j]->myDist	= matched[j - 1]->myDist; 
-				matched[j]->myId	= matched[j - 1]->myId; 
-			}
-
-			matched[index]->myDist	= dist;
-			matched[index]->myId	= player->myPlayerId;
-
-			for(int j = 0; j < 20; ++j)
-				aPlayerIds[j] = matched[j]->myId; 
+			matched.AddItem(player->myPlayerId, dist);
 		}
 
-		aOutNumPlayerIds = matchCount; 
-		for(auto j = 0; j < matchCount; ++j)
-			aPlayerIds[j] = matched[j]->myId; 
+		matched.Export(aPlayerIds, aOutNumPlayerIds);
 
 		return true; 
 	}
