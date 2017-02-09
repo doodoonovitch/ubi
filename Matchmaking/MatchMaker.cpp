@@ -127,7 +127,6 @@
 
 		Matched()
 			: myDist(-1.f)
-			, myId(-1)
 		{ }
 
 		float			myDist; 
@@ -157,12 +156,17 @@
 
 		Matched matchedItems[20];
 		Matched* matched[20];
-		for(unsigned int i = 0; i < 20; ++i)
+
+		Matched* pIter = matchedItems;
+		Matched* pEnd = matchedItems + 20;
+		Matched** p = matched;
+		for(; pIter < pEnd; ++pIter, ++p)
 		{
-			matched[i] = &matchedItems[i];
+			*p = pIter;
 		}
 
-		int matchCount = 0; 
+		int & matchCount = aOutNumPlayerIds;
+		matchCount = 0;
 
 		Player** iterPlayers = myPlayers;
 		Player** endPlayers = myPlayers + myNumPlayers;
@@ -172,8 +176,10 @@
 			Player * player = *iterPlayers;
 			if (!player->myIsAvailable)
 				continue;
-			matched[matchCount]->myId = player->myPlayerId;
-			matched[matchCount]->myDist = Dist(player->myPreferenceVector, playerToMatch->myPreferenceVector);
+
+			Matched* pItem = matched[matchCount];
+			pItem->myId = player->myPlayerId;
+			pItem->myDist = Dist(player->myPreferenceVector, playerToMatch->myPreferenceVector);
 			++matchCount;
 
 		}
@@ -203,15 +209,17 @@
 
 			for(int j = 19; j > index; --j)
 			{
-				matched[j]->myDist	= matched[j - 1]->myDist; 
-				matched[j]->myId	= matched[j - 1]->myId; 
+				Matched* mJ = matched[j];
+				Matched* mJ_1 = matched[j - 1];
+				mJ->myDist	= mJ_1->myDist;
+				mJ->myId	= mJ_1->myId;
 			}
 
-			matched[index]->myDist	= dist;
-			matched[index]->myId	= player->myPlayerId;
+			Matched* pItem = matched[index];
+			pItem->myDist	= dist;
+			pItem->myId		= player->myPlayerId;
 		}
 
-		aOutNumPlayerIds = matchCount; 
 		for(auto j = 0; j < matchCount; ++j)
 			aPlayerIds[j] = matched[j]->myId; 
 
