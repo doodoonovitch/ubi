@@ -126,13 +126,10 @@ private:
 				if (currBiggest->myDist < aDist)
 					return;
 
-				std::pop_heap(myArray, myArray + mySize, MatchComp);
+				currBiggest->myId = aId;
+				currBiggest->myDist = aDist;
 
-				Matched* item = myArray[mySize - 1];
-				item->myId = aId;
-				item->myDist = aDist;
-
-				std::push_heap(myArray, myArray + mySize, MatchComp);
+				std::make_heap(myArray, myArray + mySize, MatchComp);
 			}
 		}
 
