@@ -94,7 +94,7 @@
 	#define TEST_SUITE_PREFIX_1 "SRand_"
 #endif // USE_PREDICTABLE_RANDOMNESS
 
-#define PLAYER_COUNT_5K
+//#define PLAYER_COUNT_5K
 #ifdef PLAYER_COUNT_5K
 	#define PLAYER_COUNT 5000;
 	#define TEST_SUITE_PREFIX_2 "5K_"
@@ -113,7 +113,7 @@
 	#include "GenerateTestSamples.h"
 	static GenerateTestSamples generateTestSamples(TEST_SUITE_PREFIX_1 TEST_SUITE_PREFIX_2 "TestSuite");
 #else
-	#define USE_TEST_SUITES
+	//#define USE_TEST_SUITES
 	#ifdef USE_TEST_SUITES
 
 	#ifdef USE_PREDICTABLE_RANDOMNESS

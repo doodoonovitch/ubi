@@ -209,9 +209,6 @@
 
 			matched[index]->myDist	= dist;
 			matched[index]->myId	= player->myPlayerId;
-
-			for(int j = 0; j < 20; ++j)
-				aPlayerIds[j] = matched[j]->myId; 
 		}
 
 		aOutNumPlayerIds = matchCount; 
