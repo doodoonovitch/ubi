@@ -154,6 +154,11 @@ private:
 			}
 		}
 
+		void Reset()
+		{
+			mySize = 0;
+		}
+
 	private:
 
 		unsigned int	myCapacity;
@@ -178,11 +183,6 @@ private:
 			Player**			aPlayersEndIter
 		);
 
-		HANDLE GetSynchEvent() const 
-		{ 
-			return mySyncEvent;
-		}
-
 		void Run();
 
 	private:
@@ -192,7 +192,6 @@ private:
 		MatchedBinHeap*		myMatched;
 		Player**			myPlayersBeginIter;
 		Player**			myPlayersEndIter;
-		HANDLE				mySyncEvent;
 	};
 
 
@@ -200,11 +199,7 @@ private:
 							unsigned int	aPlayerId) const;
 
 	static void			TaskHandler(
-							MatchMaker *	matchMaker, 
-							unsigned int	index);
-
-	void				RunTasks(
-							unsigned int	index);
+							void*	aData);
 
 
 
@@ -216,10 +211,8 @@ private:
 	static const unsigned int	MaxThreadCount = 8;
 
 	unsigned int				myThreadCount;
-	std::thread*				myThreads;
-	MatchMakeTask*				myTaskStorage;
-	HANDLE						myRunTaskSemaphore;
-	HANDLE*						myWaitTaskEvents;
+	MatchedBinHeap				myMatched[MaxThreadCount];
+	MatchMakeTask				myTasks[MaxThreadCount];
 
 
 						MatchMaker(); 

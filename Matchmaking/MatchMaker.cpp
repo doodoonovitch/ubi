@@ -10,31 +10,12 @@
 
 	void			
 	MatchMaker::TaskHandler(
-		MatchMaker *	matchMaker, 
-		unsigned int	index)
+		void*	aData)
 	{
-		matchMaker->RunTasks(index);
+		MatchMakeTask * task = (MatchMakeTask *)aData;
+		task->Run();
 	}
 
-	void				
-	MatchMaker::RunTasks(
-		unsigned int	index)
-	{
-		for (;;)
-		{
-			DWORD waitResult = WaitForSingleObject(myRunTaskSemaphore, INFINITE);
-			if (waitResult == WAIT_OBJECT_0)
-			{
-				MatchMakeTask & task = myTaskStorage[index];
-
-				task.Run();
-			}
-			else
-			{
-				break;
-			}
-		}
-	}
 
 #undef min
 #undef max
@@ -42,30 +23,13 @@
 	MatchMaker::MatchMaker()
 		: myNumPlayers(0)
 		, myThreadCount(0)
-		, myThreads(nullptr)
-		, myTaskStorage(nullptr)
-		, myRunTaskSemaphore(CreateSemaphore(NULL, 0, MaxThreadCount, NULL))
 	{
 		myThreadCount = std::max(2U, std::min(MaxThreadCount, std::thread::hardware_concurrency()));
 		printf("Number of threads : %u\n", myThreadCount);
-		myThreads = new std::thread[myThreadCount];
-		myTaskStorage = new MatchMakeTask[myThreadCount];
-		myWaitTaskEvents = new HANDLE[myThreadCount];
-
-		for (unsigned int i = 0; i < myThreadCount; ++i)
-		{
-			myWaitTaskEvents[i] = myTaskStorage[i].GetSynchEvent();
-			myThreads[i] = std::thread(MatchMaker::TaskHandler, this, i);
-		}
 	}
 
 	MatchMaker::~MatchMaker()
 	{
-		CloseHandle(myRunTaskSemaphore);
-
-		delete[] myThreads;
-		delete[] myTaskStorage;
-		delete[] myWaitTaskEvents;
 	}
 
 	MatchMaker&
@@ -186,8 +150,8 @@
 		if(!playerToMatch)
 			return false; 
 
-		MatchedBinHeap matched[MaxThreadCount];
-		MatchedBinHeap & matched0 = *matched;
+		MatchedBinHeap & matched0 = myMatched[0];
+		HANDLE taskHandles[MaxThreadCount];
 
 		Player** iterPlayers = myPlayers;
 		Player** endPlayers = myPlayers + myNumPlayers;
@@ -195,30 +159,36 @@
 		
 		unsigned int n = myThreadCount - 1;
 		unsigned int taskIndex = 0;
-		for (taskIndex; taskIndex < n; ++taskIndex)
+		for (; taskIndex < myThreadCount; ++taskIndex)
 		{
-			MatchMakeTask & task = myTaskStorage[taskIndex];
-			Player** iterPlayersNext = iterPlayers + nbPlayerPerThread;
-			task.Reset(playerToMatch, &matched[taskIndex], iterPlayers, iterPlayersNext);
-			iterPlayers = iterPlayersNext;
+			MatchMakeTask & task = myTasks[taskIndex];
+			MatchedBinHeap & matched = myMatched[taskIndex];
+			matched.Reset();
+
+			if (taskIndex == n)
+			{
+				task.Reset(playerToMatch, &matched, iterPlayers, endPlayers);
+			}
+			else
+			{
+				Player** iterPlayersNext = iterPlayers + nbPlayerPerThread;
+				task.Reset(playerToMatch, &matched, iterPlayers, iterPlayersNext);
+				iterPlayers = iterPlayersNext;
+			}
+			taskHandles[taskIndex] = (HANDLE)_beginthread(TaskHandler, 0, (void*)&task);
 		}
 
-		MatchMakeTask & task = myTaskStorage[taskIndex];
-		task.Reset(playerToMatch, &matched[taskIndex], iterPlayers, endPlayers);
-
-		ReleaseSemaphore(myRunTaskSemaphore, myThreadCount, NULL);
-
-		WaitForMultipleObjects(myThreadCount, myWaitTaskEvents, TRUE, INFINITE);
+		WaitForMultipleObjects(myThreadCount, taskHandles, TRUE, INFINITE);
 
 		for (unsigned int i = 1; i < myThreadCount; ++i)
 		{
-			matched[i].ForEach([&matched0](const Matched* item)
+			myMatched[i].ForEach([&matched0](const Matched* item)
 			{
 				matched0.AddItem(item->myId, item->myDist);
 			});
 		}
 
-		matched->Export(aPlayerIds, aOutNumPlayerIds);
+		matched0.Export(aPlayerIds, aOutNumPlayerIds);
 
 		return true; 
 	}
@@ -226,18 +196,12 @@
 
 	MatchMaker::MatchMakeTask::MatchMakeTask(
 	)
-		: myPlayerToMatch(nullptr)
-		, myMatched(nullptr)
-		, myPlayersBeginIter(nullptr)
-		, myPlayersEndIter(nullptr)
-		, mySyncEvent(CreateEvent(NULL, FALSE, FALSE, NULL))
 	{
 
 	}
 
 	MatchMaker::MatchMakeTask::~MatchMakeTask()
 	{
-		CloseHandle(mySyncEvent);
 	}
 
 	void
@@ -252,8 +216,6 @@
 		myMatched = aMatched;
 		myPlayersBeginIter = aPlayersBeginIter;
 		myPlayersEndIter = aPlayersEndIter;
-
-		//ResetEvent(mySyncEvent);
 	}
 
 	void MatchMaker::MatchMakeTask::Run()
@@ -267,6 +229,4 @@
 			float dist = Dist(myPlayerToMatch->myPreferenceVector, player->myPreferenceVector);
 			myMatched->AddItem(player->myPlayerId, dist);
 		}
-
-		SetEvent(mySyncEvent);
 	}
