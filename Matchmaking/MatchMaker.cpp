@@ -7,6 +7,41 @@
 #include <functional>
 #include <math.h>
 
+
+MatchMaker::RWMutex::RWMutex()
+	: mySRWLock(SRWLOCK_INIT)
+{
+}
+
+MatchMaker::RWMutex::~RWMutex()
+{
+}
+
+void 
+MatchMaker::RWMutex::LockRead()
+{
+	AcquireSRWLockShared(&mySRWLock);
+}
+
+void 
+MatchMaker::RWMutex::UnlockRead()
+{
+	ReleaseSRWLockShared(&mySRWLock);
+}
+
+void 
+MatchMaker::RWMutex::LockWrite()
+{
+	AcquireSRWLockExclusive(&mySRWLock);
+}
+
+void 
+MatchMaker::RWMutex::UnlockWrite()
+{
+	ReleaseSRWLockExclusive(&mySRWLock);
+}
+
+
 	MatchMaker::MatchMaker()
 		: myNumPlayers(0)
 	{
@@ -45,21 +80,22 @@
 		unsigned int	aPlayerId, 
 		float			aPreferenceVector[20])
 	{
-		MutexLock lock(myLock); 
+		WriterLock lock(myLock);
 
 		Player* p = FindPlayer(aPlayerId);
+
 		if (p != nullptr)
 		{
 			p->SetPreferences(aPreferenceVector);
 			return true;
 		}
 
-		if(myNumPlayers == MAX_NUM_PLAYERS)
-			return false; 
+		if (myNumPlayers == MAX_NUM_PLAYERS)
+			return false;
 
-		myPlayers[myNumPlayers] = new Player(aPlayerId, aPreferenceVector, false); 
+		myPlayers[myNumPlayers] = new Player(aPlayerId, aPreferenceVector, false);
 
-		++myNumPlayers; 
+		++myNumPlayers;
 
 		return true; 
 	}
@@ -68,7 +104,7 @@
 	MatchMaker::SetPlayerAvailable(
 		unsigned int	aPlayerId)
 	{
-		MutexLock lock(myLock); 
+		WriterLock lock(myLock);
 
 		Player* p = FindPlayer(aPlayerId);
 		if (p != nullptr)
@@ -84,7 +120,7 @@
 	MatchMaker::SetPlayerUnavailable(
 		unsigned int	aPlayerId)
 	{
-		MutexLock lock(myLock); 
+		WriterLock lock(myLock);
 
 		Player* p = FindPlayer(aPlayerId);
 		if (p != nullptr)
@@ -124,7 +160,7 @@
 		unsigned int	aPlayerIds[20], 
 		int&			aOutNumPlayerIds)
 	{
-		MutexLock lock(myLock); 
+		ReaderLock lock(myLock);
 
 		const Player* playerToMatch = FindPlayer(aPlayerId);
 
@@ -133,8 +169,8 @@
 
 		MatchedBinHeap matched;
 
-		Player** iterPlayers = myPlayers;
 		Player** endPlayers = myPlayers + myNumPlayers;
+		Player** iterPlayers = myPlayers;
 
 		for(; iterPlayers < endPlayers; ++iterPlayers)
 		{
