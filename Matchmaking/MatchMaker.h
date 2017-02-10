@@ -68,8 +68,80 @@ private:
 							unsigned int	aPlayerId) const;
 
 
-	Mutex				myLock; 
-	int					myNumPlayers; 
+
+	class RWMutex
+	{
+	public:
+
+		RWMutex();
+		~RWMutex();
+
+		void LockRead();
+		void UnlockRead();
+		void LockWrite();
+		void UnlockWrite();
+
+	private:
+
+		SRWLOCK				mySRWLock;
+	};
+
+	class ReaderLock
+	{
+	public:
+
+		ReaderLock(
+			RWMutex*	aLock)
+			: myLock(aLock)
+		{
+			myLock->LockRead();
+		}
+
+		ReaderLock(
+			RWMutex&	aLock)
+			: myLock(&aLock)
+		{
+			myLock->LockRead();
+		}
+
+		~ReaderLock()
+		{
+			myLock->UnlockRead();
+		}
+
+		RWMutex*	myLock;
+	};
+
+
+	class WriterLock
+	{
+	public:
+
+		WriterLock(
+			RWMutex*	aLock)
+			: myLock(aLock)
+		{
+			myLock->LockWrite();
+		}
+
+		WriterLock(
+			RWMutex&	aLock)
+			: myLock(&aLock)
+		{
+			myLock->LockWrite();
+		}
+
+		~WriterLock()
+		{
+			myLock->UnlockWrite();
+		}
+
+		RWMutex*	myLock;
+	};
+
+
+	RWMutex				myLock;
+	int					myNumPlayers;
 	Player*				myPlayers[MAX_NUM_PLAYERS]; 
 
 						MatchMaker(); 
