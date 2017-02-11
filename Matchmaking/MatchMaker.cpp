@@ -26,10 +26,19 @@
 	{
 		myThreadCount = std::max(2U, std::min(MaxThreadCount, std::thread::hardware_concurrency()));
 		printf("Number of threads : %u\n", myThreadCount);
+
+		myMatched = new Matched*[myThreadCount * 20];
+		myMatchedBinHeap = new MatchedBinHeap[myThreadCount];
+		myTasks = new MatchMakeTask[myThreadCount];
+
+
 	}
 
 	MatchMaker::~MatchMaker()
 	{
+		delete[] myTasks;
+		delete[] myMatched;
+		delete[] myMatchedBinHeap;
 	}
 
 	MatchMaker&
@@ -150,7 +159,6 @@
 		if(!playerToMatch)
 			return false; 
 
-		MatchedBinHeap & matched0 = myMatched[0];
 		HANDLE taskHandles[MaxThreadCount];
 
 		Player** iterPlayers = myPlayers;
@@ -162,7 +170,7 @@
 		for (; taskIndex < myThreadCount; ++taskIndex)
 		{
 			MatchMakeTask & task = myTasks[taskIndex];
-			MatchedBinHeap & matched = myMatched[taskIndex];
+			MatchedBinHeap & matched = myMatchedBinHeap[taskIndex];
 			matched.Reset();
 
 			if (taskIndex == n)
@@ -180,15 +188,50 @@
 
 		WaitForMultipleObjects(myThreadCount, taskHandles, TRUE, INFINITE);
 
-		for (unsigned int i = 1; i < myThreadCount; ++i)
+		float maxDist;
+
+		unsigned int matchedCount = 0;
+
+		for (unsigned int i = 0; i < myThreadCount; ++i)
 		{
-			myMatched[i].ForEach([&matched0](const Matched* item)
+			MatchedBinHeap& bh = myMatchedBinHeap[i];
+
+			if (matchedCount == 0)
 			{
-				matched0.AddItem(item->myId, item->myDist);
-			});
+				matchedCount = bh.GetSize();
+				if (matchedCount > 0)
+				{
+					memcpy(myMatched, bh.GetArray(), bh.GetSize() * sizeof(Matched *));
+					maxDist = myMatched[0]->myDist;
+				}
+			}
+			else
+			{
+				Matched ** trg = myMatched + matchedCount;
+				Matched *const* src = bh.GetArray();
+				Matched *const* end = src + bh.GetSize();
+				for (; src < end; ++src)
+				{
+					if ((*src)->myDist < maxDist)
+					{
+						*trg = *src;
+						++trg;
+						++matchedCount;
+					}
+				}
+			}
 		}
 
-		matched0.Export(aPlayerIds, aOutNumPlayerIds);
+		aOutNumPlayerIds = std::min(20, static_cast<int>(matchedCount));
+		if (matchedCount > 0)
+		{
+			std::sort(myMatched, myMatched + matchedCount, MatchComp);
+			for (int i = 0; i < aOutNumPlayerIds; ++i)
+			{
+				aPlayerIds[i] = myMatched[i]->myId;
+			}
+		}
+
 
 		return true; 
 	}

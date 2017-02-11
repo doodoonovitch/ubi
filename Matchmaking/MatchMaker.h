@@ -97,10 +97,8 @@ private:
 
 		static const unsigned int MaxCapacity = 20;
 
-		MatchedBinHeap(
-			unsigned int	aCapacity = MaxCapacity)
-			: myCapacity(aCapacity)
-			, mySize(0)
+		MatchedBinHeap()
+			: mySize(0)
 		{
 			for (unsigned int i = 0; i < myCapacity; ++i)
 			{
@@ -135,33 +133,25 @@ private:
 			}
 		}
 
-		void Export(
-			unsigned int	aPlayerIds[20],
-			int&			aOutNumPlayerIds)
-		{
-			aOutNumPlayerIds = mySize; 
-			for(unsigned int j = 0; j < mySize; ++j)
-				aPlayerIds[j] = myArray[j]->myId;
-		}
-
-		void ForEach(std::function<void(const Matched* item)> func) const
-		{
-			Matched* const* iter = myArray;
-			Matched* const* end = myArray + mySize;
-			for (; iter < end; ++iter)
-			{
-				func(*iter);
-			}
-		}
-
 		void Reset()
 		{
 			mySize = 0;
 		}
 
+		unsigned int GetSize() const
+		{
+			return mySize;
+		}
+
+		Matched* const*  GetArray() const
+		{
+			return myArray;
+		}
+
 	private:
 
-		unsigned int	myCapacity;
+		const unsigned int	myCapacity = MaxCapacity;
+
 		unsigned int	mySize;
 		Matched			myStorage[MaxCapacity];
 		Matched*		myArray[MaxCapacity];
@@ -211,8 +201,10 @@ private:
 	static const unsigned int	MaxThreadCount = 8;
 
 	unsigned int				myThreadCount;
-	MatchedBinHeap				myMatched[MaxThreadCount];
-	MatchMakeTask				myTasks[MaxThreadCount];
+
+	Matched**					myMatched;
+	MatchedBinHeap*				myMatchedBinHeap;
+	MatchMakeTask*				myTasks;
 
 
 						MatchMaker(); 
