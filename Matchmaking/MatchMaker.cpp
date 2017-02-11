@@ -207,17 +207,16 @@
 			if(index == -1)
 				continue; 
 
+			Matched* newItem = matched[19];
+			newItem->myDist = dist;
+			newItem->myId = player->myPlayerId;
+
 			for(int j = 19; j > index; --j)
 			{
-				Matched* mJ = matched[j];
-				Matched* mJ_1 = matched[j - 1];
-				mJ->myDist	= mJ_1->myDist;
-				mJ->myId	= mJ_1->myId;
+				matched[j] = matched[j - 1];
 			}
 
-			Matched* pItem = matched[index];
-			pItem->myDist	= dist;
-			pItem->myId		= player->myPlayerId;
+			matched[index] = newItem;
 		}
 
 		for(auto j = 0; j < matchCount; ++j)
