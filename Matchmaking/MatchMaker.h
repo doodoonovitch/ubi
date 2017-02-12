@@ -129,7 +129,8 @@ private:
 				currBiggest->myId = aId;
 				currBiggest->myDist = aDist;
 
-				std::make_heap(myArray, myArray + mySize, MatchComp);
+				//std::make_heap(myArray, myArray + mySize, MatchComp);
+				SinkDown(1);
 			}
 		}
 
@@ -140,6 +141,51 @@ private:
 			aOutNumPlayerIds = mySize; 
 			for(unsigned int j = 0; j < mySize; ++j)
 				aPlayerIds[j] = myArray[j]->myId;
+		}
+
+	private:
+
+		static unsigned int LeftChild(unsigned int index)
+		{
+			return index << 1;
+		}
+
+		static unsigned int RightChild(unsigned int index)
+		{
+			return (index << 1) + 1;
+		}
+
+
+		void SinkDown(unsigned int index)
+		{
+			if (index > mySize)
+				return;
+
+			unsigned int greatest = index;
+
+			unsigned int childIndex = LeftChild(index);
+			if (childIndex <= mySize)
+			{
+				if (MatchComp(myArray[greatest - 1], myArray[childIndex - 1]))
+				{
+					greatest = childIndex;
+				}
+			}
+
+			childIndex = RightChild(index);
+			if (childIndex <= mySize)
+			{
+				if (MatchComp(myArray[greatest - 1], myArray[childIndex - 1]))
+				{
+					greatest = childIndex;
+				}
+			}
+
+			if (index != greatest)
+			{
+				std::swap(myArray[greatest - 1], myArray[index - 1]);
+				SinkDown(greatest);
+			}
 		}
 
 	private:
