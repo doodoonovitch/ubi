@@ -67,10 +67,17 @@ private:
 	Player*				FindPlayer(
 							unsigned int	aPlayerId) const;
 
+	float				Dist(
+							float	aA[20],
+							float	aB[20]) const;
+
 
 	Mutex				myLock; 
 	int					myNumPlayers; 
 	Player*				myPlayers[MAX_NUM_PLAYERS]; 
+
+	static const unsigned int	MaxDistCompThreadCount = 8;
+	unsigned int				myDistCompThreadCount;
 
 						MatchMaker(); 
 

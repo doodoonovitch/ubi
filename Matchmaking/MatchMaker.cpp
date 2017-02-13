@@ -6,10 +6,17 @@
 #include <numeric>
 #include <functional>
 #include <math.h>
+#include <thread>
+
+
+#undef min
+#undef max
 
 	MatchMaker::MatchMaker()
 		: myNumPlayers(0)
 	{
+		myDistCompThreadCount = 4;// std::max(2U, std::min(MaxDistCompThreadCount, std::thread::hardware_concurrency()));
+		printf("Number of threads for distance computation : %u\n", myDistCompThreadCount);
 	}
 
 	MatchMaker::~MatchMaker()
@@ -96,24 +103,85 @@
 		return false; 
 	}
 
-	float 
-	Dist(
-		float	aA[20], 
-		float	aB[20])
+	struct ThreadParam
 	{
-		//float dist2 = std::inner_product(aA, aA + 20, aB, 0.f, std::plus<float>(), [](float a, float b) 
-		//{
-		//	float res = a - b;
-		//	res *= res;
-		//	return res;
-		//});
-		float dist2 = 0.f;
-		for (auto i = 0; i < 20; ++i)
+		float result;
+		float* aA;
+		float* aB;
+		unsigned int count;
+	};
+
+	float 
+		MatchMaker::Dist(
+		float	aA[20], 
+		float	aB[20]) const
+	{
+		HANDLE threads[MaxDistCompThreadCount];
+		ThreadParam params[MaxDistCompThreadCount];
+
+		auto d = 20 / myDistCompThreadCount;
+		auto r = 20 % myDistCompThreadCount;
+
+
+		float* pA = aA;
+		float* pB = aB;
+		
+		ThreadParam * param = params;
+		HANDLE * threadEnd = threads + myDistCompThreadCount;
+		for (HANDLE * thread = threads; thread < threadEnd; ++thread, ++param)
 		{
-			float d2 = aA[i] - aB[i];
-			d2 *= d2;
-			dist2 += d2;
+			unsigned int count = d;
+			if (r > 0)
+			{
+				++count;
+				--r;
+			}
+
+			param->aA = pA;
+			param->aB = pB;
+			param->count = count;
+
+			*thread = (HANDLE)_beginthread([](void * arg)
+			{
+				ThreadParam * param = reinterpret_cast<ThreadParam*>(arg);
+
+				param->result = 0.f;
+				float* end = param->aA + param->count;
+				for (; param->aA < end; ++param->aA, ++param->aB)
+				{
+					float d2 = *param->aA - *param->aB;
+					d2 *= d2;
+					param->result += d2;
+				}
+			}, 0, (void*)param);
+
+			pA += count;
+			pB += count;
 		}
+
+		WaitForMultipleObjects(myDistCompThreadCount, threads, TRUE, INFINITE);
+		
+		float dist2 = 0.f;
+		ThreadParam* end = params + myDistCompThreadCount;
+		ThreadParam* p = params;
+		for (; p < end; ++p)
+		{
+			dist2 += p->result;
+		}
+
+		////float dist2 = std::inner_product(aA, aA + 20, aB, 0.f, std::plus<float>(), [](float a, float b) 
+		////{
+		////	float res = a - b;
+		////	res *= res;
+		////	return res;
+		////});
+		//float dist2 = 0.f;
+		//for (auto i = 0; i < 20; ++i)
+		//{
+		//	float d2 = aA[i] - aB[i];
+		//	d2 *= d2;
+		//	dist2 += d2;
+		//}
 
 		return dist2;
 	}
