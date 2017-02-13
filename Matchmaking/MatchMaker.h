@@ -183,9 +183,9 @@ private:
 			Player**			aPlayersEndIter
 		);
 
-		HANDLE GetSynchEvent() const 
+		HANDLE GetSynchro() const 
 		{ 
-			return mySyncEvent;
+			return mySyncSemaphore;
 		}
 
 		void Run();
@@ -197,16 +197,16 @@ private:
 		MatchedBinHeap*		myMatched;
 		Player**			myPlayersBeginIter;
 		Player**			myPlayersEndIter;
-		HANDLE				mySyncEvent;
+		HANDLE				mySyncSemaphore;
 	};
+	friend class MatchMakeTask;
 
 
 	Player*				FindPlayer(
 							unsigned int	aPlayerId) const;
 
 	static void			TaskHandler(
-							MatchMaker *	matchMaker, 
-							unsigned int	index);
+							void*			arg);
 
 	void				RunTasks(
 							unsigned int	index);
@@ -221,10 +221,10 @@ private:
 	static const unsigned int	MaxThreadCount = 8;
 
 	unsigned int				myThreadCount;
-	std::thread*				myThreads;
+	HANDLE*						myThreads;
 	MatchMakeTask*				myTaskStorage;
-	HANDLE						myRunTaskSemaphore;
-	HANDLE*						myWaitTaskEvents;
+	HANDLE						myRunTasks;
+	HANDLE*						myWaitTasks;
 	MatchedBinHeap				myMatched[MaxThreadCount];
 
 

@@ -8,12 +8,13 @@
 #include <math.h>
 
 
-	void			
+	void
 	MatchMaker::TaskHandler(
-		MatchMaker *	matchMaker, 
-		unsigned int	index)
+		void*			arg)
 	{
-		matchMaker->RunTasks(index);
+		MatchMaker & matchMaker = MatchMaker::GetInstance();
+		unsigned int index = (unsigned int)arg;
+		matchMaker.RunTasks(index);
 	}
 
 	void				
@@ -22,7 +23,7 @@
 	{
 		for (;;)
 		{
-			DWORD waitResult = WaitForSingleObject(myRunTaskSemaphore, INFINITE);
+			DWORD waitResult = WaitForSingleObject(myRunTasks, INFINITE);
 			if (waitResult == WAIT_OBJECT_0)
 			{
 				MatchMakeTask & task = myTaskStorage[index];
@@ -31,6 +32,7 @@
 			}
 			else
 			{
+				printf("[Worker thread %u] WaitForSingleObject has failed!\n", index);
 				break;
 			}
 		}
@@ -44,28 +46,28 @@
 		, myThreadCount(0)
 		, myThreads(nullptr)
 		, myTaskStorage(nullptr)
-		, myRunTaskSemaphore(CreateSemaphore(NULL, 0, MaxThreadCount, NULL))
+		, myRunTasks(CreateSemaphore(NULL, 0, MaxThreadCount, NULL))
 	{
 		myThreadCount = std::max(2U, std::min(MaxThreadCount, std::thread::hardware_concurrency()));
 		printf("Number of threads : %u\n", myThreadCount);
-		myThreads = new std::thread[myThreadCount];
+		myThreads = new HANDLE[myThreadCount];
 		myTaskStorage = new MatchMakeTask[myThreadCount];
-		myWaitTaskEvents = new HANDLE[myThreadCount];
+		myWaitTasks = new HANDLE[myThreadCount];
 
 		for (unsigned int i = 0; i < myThreadCount; ++i)
 		{
-			myWaitTaskEvents[i] = myTaskStorage[i].GetSynchEvent();
-			myThreads[i] = std::thread(MatchMaker::TaskHandler, this, i);
+			myWaitTasks[i] = myTaskStorage[i].GetSynchro();
+			myThreads[i] = (HANDLE)_beginthread(MatchMaker::TaskHandler, 0, (void*)i);
 		}
 	}
 
 	MatchMaker::~MatchMaker()
 	{
-		CloseHandle(myRunTaskSemaphore);
+		CloseHandle(myRunTasks);
 
 		delete[] myThreads;
 		delete[] myTaskStorage;
-		delete[] myWaitTaskEvents;
+		delete[] myWaitTasks;
 	}
 
 	MatchMaker&
@@ -183,7 +185,7 @@
 
 		const Player* playerToMatch = FindPlayer(aPlayerId);
 
-		if(!playerToMatch)
+		if(playerToMatch == nullptr)
 			return false; 
 
 		MatchedBinHeap & matched0 = *myMatched;
@@ -210,9 +212,12 @@
 		matched.Reset();
 		task.Reset(playerToMatch, &matched, iterPlayers, endPlayers);
 
-		ReleaseSemaphore(myRunTaskSemaphore, myThreadCount, NULL);
-
-		WaitForMultipleObjects(myThreadCount, myWaitTaskEvents, TRUE, INFINITE);
+		if (ReleaseSemaphore(myRunTasks, myThreadCount, NULL) == 0)
+		{
+			printf("ReleaseSemaphore(myRunTasks, ...) has failed!\n");
+		}
+		
+		WaitForMultipleObjects(myThreadCount, myWaitTasks, TRUE, INFINITE);
 
 		for (unsigned int i = 1; i < myThreadCount; ++i)
 		{
@@ -234,14 +239,14 @@
 		, myMatched(nullptr)
 		, myPlayersBeginIter(nullptr)
 		, myPlayersEndIter(nullptr)
-		, mySyncEvent(CreateEvent(NULL, FALSE, FALSE, NULL))
+		, mySyncSemaphore(CreateSemaphore(NULL, 0, 1, NULL))
 	{
 
 	}
 
 	MatchMaker::MatchMakeTask::~MatchMakeTask()
 	{
-		CloseHandle(mySyncEvent);
+		CloseHandle(mySyncSemaphore);
 	}
 
 	void
@@ -256,8 +261,6 @@
 		myMatched = aMatched;
 		myPlayersBeginIter = aPlayersBeginIter;
 		myPlayersEndIter = aPlayersEndIter;
-
-		//ResetEvent(mySyncEvent);
 	}
 
 	void MatchMaker::MatchMakeTask::Run()
@@ -272,5 +275,5 @@
 			myMatched->AddItem(player->myPlayerId, dist);
 		}
 
-		SetEvent(mySyncEvent);
+		ReleaseSemaphore(mySyncSemaphore, 1, NULL);
 	}
