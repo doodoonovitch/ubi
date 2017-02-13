@@ -183,21 +183,14 @@ private:
 			Player**			aPlayersEndIter
 		);
 
-		HANDLE GetSynchro() const 
-		{ 
-			return mySyncSemaphore;
-		}
-
 		void Run();
 
 	private:
-
-
+		
 		const Player*		myPlayerToMatch;
 		MatchedBinHeap*		myMatched;
 		Player**			myPlayersBeginIter;
 		Player**			myPlayersEndIter;
-		HANDLE				mySyncSemaphore;
 	};
 	friend class MatchMakeTask;
 

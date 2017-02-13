@@ -29,6 +29,8 @@
 				MatchMakeTask & task = myTaskStorage[index];
 
 				task.Run();
+
+				ReleaseSemaphore(myWaitTasks[index], 1, NULL);
 			}
 			else
 			{
@@ -56,7 +58,7 @@
 
 		for (unsigned int i = 0; i < myThreadCount; ++i)
 		{
-			myWaitTasks[i] = myTaskStorage[i].GetSynchro();
+			myWaitTasks[i] = CreateSemaphore(NULL, 0, 1, NULL);
 			myThreads[i] = (HANDLE)_beginthread(MatchMaker::TaskHandler, 0, (void*)i);
 		}
 	}
@@ -64,6 +66,11 @@
 	MatchMaker::~MatchMaker()
 	{
 		CloseHandle(myRunTasks);
+
+		for (unsigned int i = 0; i < myThreadCount; ++i)
+		{
+			CloseHandle(myWaitTasks[i]);
+		}
 
 		delete[] myThreads;
 		delete[] myTaskStorage;
@@ -239,14 +246,12 @@
 		, myMatched(nullptr)
 		, myPlayersBeginIter(nullptr)
 		, myPlayersEndIter(nullptr)
-		, mySyncSemaphore(CreateSemaphore(NULL, 0, 1, NULL))
 	{
 
 	}
 
 	MatchMaker::MatchMakeTask::~MatchMakeTask()
-	{
-		CloseHandle(mySyncSemaphore);
+	{		
 	}
 
 	void
@@ -274,6 +279,4 @@
 			float dist = Dist(myPlayerToMatch->myPreferenceVector, player->myPreferenceVector);
 			myMatched->AddItem(player->myPlayerId, dist);
 		}
-
-		ReleaseSemaphore(mySyncSemaphore, 1, NULL);
 	}
