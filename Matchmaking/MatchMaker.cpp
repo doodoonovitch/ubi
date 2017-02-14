@@ -23,18 +23,14 @@
 	{
 		for (;;)
 		{
-			DWORD waitResult = WaitForSingleObject(myRunTasks, INFINITE);
+			DWORD waitResult = WaitForSingleObject(myRunTasks[index], INFINITE);
 			if (waitResult == WAIT_OBJECT_0)
 			{
 				MatchMakeTask & task = myTaskStorage[index];
 
 				task.Run();
 
-				LONG res = InterlockedDecrement(&myRunningTasks);
-				if (res == 0)
-				{
-					SetEvent(myWaitTasks);
-				}
+				SetEvent(myWaitTasks[index]);
 			}
 			else
 			{
@@ -52,25 +48,27 @@
 		, myThreadCount(0)
 		, myThreads(nullptr)
 		, myTaskStorage(nullptr)
-		, myRunTasks(CreateSemaphore(NULL, 0, MaxThreadCount, NULL))
-		, myWaitTasks(CreateEvent(NULL, FALSE, FALSE, NULL))
 	{
 		myThreadCount = std::max(2U, std::min(MaxThreadCount, std::thread::hardware_concurrency()));
 		printf("Number of threads : %u\n", myThreadCount);
 		myThreads = new HANDLE[myThreadCount];
 		myTaskStorage = new MatchMakeTask[myThreadCount];
-		
 
 		for (unsigned int i = 0; i < myThreadCount; ++i)
 		{
 			myThreads[i] = (HANDLE)_beginthread(MatchMaker::TaskHandler, 0, (void*)i);
+			myRunTasks[i] = CreateEvent(NULL, FALSE, FALSE, NULL);
+			myWaitTasks[i] = CreateEvent(NULL, FALSE, FALSE, NULL);
 		}
 	}
 
 	MatchMaker::~MatchMaker()
 	{
-		CloseHandle(myRunTasks);
-		CloseHandle(myWaitTasks);
+		for (unsigned int i = 0; i < myThreadCount; ++i)
+		{
+			CloseHandle(myRunTasks[i]);
+			CloseHandle(myWaitTasks[i]);
+		}
 		delete[] myThreads;
 		delete[] myTaskStorage;
 	}
@@ -210,20 +208,17 @@
 			Player** iterPlayersNext = iterPlayers + nbPlayerPerThread;
 			task.Reset(playerToMatch, &matched, iterPlayers, iterPlayersNext);
 			iterPlayers = iterPlayersNext;
+
+			SetEvent(myRunTasks[taskIndex]);
 		}
 
 		MatchMakeTask & task = myTaskStorage[taskIndex];
 		MatchedBinHeap & matched = myMatched[taskIndex];
 		matched.Reset();
 		task.Reset(playerToMatch, &matched, iterPlayers, endPlayers);
-
-		myRunningTasks = myThreadCount;
-		if (ReleaseSemaphore(myRunTasks, myThreadCount, NULL) == 0)
-		{
-			printf("ReleaseSemaphore(myRunTasks, ...) has failed!\n");
-		}
-		
-		WaitForSingleObject(myWaitTasks, INFINITE);
+		SetEvent(myRunTasks[taskIndex]);
+	
+		WaitForMultipleObjects(myThreadCount, myWaitTasks, TRUE, INFINITE);
 
 		for (unsigned int i = 1; i < myThreadCount; ++i)
 		{
