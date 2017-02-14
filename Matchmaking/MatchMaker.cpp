@@ -30,7 +30,11 @@
 
 				task.Run();
 
-				ReleaseSemaphore(myWaitTasks[index], 1, NULL);
+				LONG res = InterlockedDecrement(&myRunningTasks);
+				if (res == 0)
+				{
+					SetEvent(myWaitTasks);
+				}
 			}
 			else
 			{
@@ -49,16 +53,16 @@
 		, myThreads(nullptr)
 		, myTaskStorage(nullptr)
 		, myRunTasks(CreateSemaphore(NULL, 0, MaxThreadCount, NULL))
+		, myWaitTasks(CreateEvent(NULL, FALSE, FALSE, NULL))
 	{
 		myThreadCount = std::max(2U, std::min(MaxThreadCount, std::thread::hardware_concurrency()));
 		printf("Number of threads : %u\n", myThreadCount);
 		myThreads = new HANDLE[myThreadCount];
 		myTaskStorage = new MatchMakeTask[myThreadCount];
-		myWaitTasks = new HANDLE[myThreadCount];
+		
 
 		for (unsigned int i = 0; i < myThreadCount; ++i)
 		{
-			myWaitTasks[i] = CreateSemaphore(NULL, 0, 1, NULL);
 			myThreads[i] = (HANDLE)_beginthread(MatchMaker::TaskHandler, 0, (void*)i);
 		}
 	}
@@ -66,15 +70,9 @@
 	MatchMaker::~MatchMaker()
 	{
 		CloseHandle(myRunTasks);
-
-		for (unsigned int i = 0; i < myThreadCount; ++i)
-		{
-			CloseHandle(myWaitTasks[i]);
-		}
-
+		CloseHandle(myWaitTasks);
 		delete[] myThreads;
 		delete[] myTaskStorage;
-		delete[] myWaitTasks;
 	}
 
 	MatchMaker&
@@ -122,8 +120,8 @@
 
 		++myNumPlayers; 
 
-		if(myNumPlayers % 100 == 0)
-			printf("num players in system %u\n", myNumPlayers); 
+		//if(myNumPlayers % 100 == 0)
+		//	printf("num players in system %u\n", myNumPlayers); 
 
 		return true; 
 	}
@@ -219,12 +217,13 @@
 		matched.Reset();
 		task.Reset(playerToMatch, &matched, iterPlayers, endPlayers);
 
+		myRunningTasks = myThreadCount;
 		if (ReleaseSemaphore(myRunTasks, myThreadCount, NULL) == 0)
 		{
 			printf("ReleaseSemaphore(myRunTasks, ...) has failed!\n");
 		}
 		
-		WaitForMultipleObjects(myThreadCount, myWaitTasks, TRUE, INFINITE);
+		WaitForSingleObject(myWaitTasks, INFINITE);
 
 		for (unsigned int i = 1; i < myThreadCount; ++i)
 		{

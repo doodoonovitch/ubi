@@ -216,8 +216,9 @@ private:
 	unsigned int				myThreadCount;
 	HANDLE*						myThreads;
 	MatchMakeTask*				myTaskStorage;
+	volatile LONG				myRunningTasks;
 	HANDLE						myRunTasks;
-	HANDLE*						myWaitTasks;
+	HANDLE						myWaitTasks;
 	MatchedBinHeap				myMatched[MaxThreadCount];
 
 
