@@ -7,6 +7,42 @@
 #include <functional>
 #include <math.h>
 
+
+MatchMaker::RWMutex::RWMutex()
+	: mySRWLock(SRWLOCK_INIT)
+{
+}
+
+MatchMaker::RWMutex::~RWMutex()
+{
+}
+
+void
+MatchMaker::RWMutex::LockRead()
+{
+	AcquireSRWLockShared(&mySRWLock);
+}
+
+void
+MatchMaker::RWMutex::UnlockRead()
+{
+	ReleaseSRWLockShared(&mySRWLock);
+}
+
+void
+MatchMaker::RWMutex::LockWrite()
+{
+	AcquireSRWLockExclusive(&mySRWLock);
+}
+
+void
+MatchMaker::RWMutex::UnlockWrite()
+{
+	ReleaseSRWLockExclusive(&mySRWLock);
+}
+
+
+
 	MatchMaker::MatchMaker()
 		: myNumPlayers(0)
 	{
@@ -45,14 +81,15 @@
 		unsigned int	aPlayerId, 
 		float			aPreferenceVector[20])
 	{
-		MutexLock lock(myLock); 
-
 		Player* p = FindPlayer(aPlayerId);
 		if (p != nullptr)
 		{
+			WriterLock lock(myLock);
 			p->SetPreferences(aPreferenceVector);
 			return true;
 		}
+
+		MutexLock lock(myLockAdd);
 
 		if(myNumPlayers == MAX_NUM_PLAYERS)
 			return false; 
@@ -72,11 +109,10 @@
 	MatchMaker::SetPlayerAvailable(
 		unsigned int	aPlayerId)
 	{
-		MutexLock lock(myLock); 
-
 		Player* p = FindPlayer(aPlayerId);
 		if (p != nullptr)
 		{
+			WriterLock lock(myLock);
 			p->myIsAvailable = true;
 			return true;
 		}
@@ -88,11 +124,10 @@
 	MatchMaker::SetPlayerUnavailable(
 		unsigned int	aPlayerId)
 	{
-		MutexLock lock(myLock); 
-
 		Player* p = FindPlayer(aPlayerId);
 		if (p != nullptr)
 		{
+			WriterLock lock(myLock);
 			p->myIsAvailable = false;
 			return true;
 		}
@@ -143,17 +178,15 @@
 	}
 
 	bool
-	MatchMaker::MatchMake(
-		unsigned int	aPlayerId, 
-		unsigned int	aPlayerIds[20], 
-		int&			aOutNumPlayerIds)
+		MatchMaker::MatchMake(
+			unsigned int	aPlayerId,
+			unsigned int	aPlayerIds[20],
+			int&			aOutNumPlayerIds)
 	{
-		MutexLock lock(myLock); 
-
 		const Player* playerToMatch = FindPlayer(aPlayerId);
 
-		if(!playerToMatch)
-			return false; 
+		if (!playerToMatch)
+			return false;
 
 		Matched matchedItems[20];
 		Matched* matched[20];
@@ -161,7 +194,7 @@
 		Matched* pIter = matchedItems;
 		Matched* pEnd = matchedItems + 20;
 		Matched** p = matched;
-		for(; pIter < pEnd; ++pIter, ++p)
+		for (; pIter < pEnd; ++pIter, ++p)
 		{
 			*p = pIter;
 		}
@@ -172,50 +205,53 @@
 		Player* player = myPlayers;
 		Player* endPlayer = myPlayers + myNumPlayers;
 
-		for (; player < endPlayer && matchCount < 20; ++player)
 		{
-			if (!player->myIsAvailable)
-				continue;
+			ReaderLock lock(myLock);
 
-			Matched* pItem = matched[matchCount];
-			pItem->myId = player->myPlayerId;
-			pItem->myDist = Dist(player->myPreferenceVector, playerToMatch->myPreferenceVector);
-			++matchCount;
-
-		}
-
-		using std::sort;
-		sort(matched, matched + matchCount, MatchComp);
-
-		for(; player < endPlayer; ++player)
-		{
-			if (!player->myIsAvailable)
-				continue;
-
-			float dist = Dist(playerToMatch->myPreferenceVector, player->myPreferenceVector);
-
-			int index = -1; 
-			for(int j = 19; j >= 0; --j)
+			for (; player < endPlayer && matchCount < 20; ++player)
 			{
-				if(matched[j]->myDist <= dist)
-					break; 
+				if (!player->myIsAvailable)
+					continue;
 
-				index = j; 
+				Matched* pItem = matched[matchCount];
+				pItem->myId = player->myPlayerId;
+				pItem->myDist = Dist(player->myPreferenceVector, playerToMatch->myPreferenceVector);
+				++matchCount;
 			}
 
-			if(index == -1)
-				continue; 
+			using std::sort;
+			sort(matched, matched + matchCount, MatchComp);
 
-			Matched* newItem = matched[19];
-			newItem->myDist = dist;
-			newItem->myId = player->myPlayerId;
-
-			for(int j = 19; j > index; --j)
+			for (; player < endPlayer; ++player)
 			{
-				matched[j] = matched[j - 1];
-			}
+				if (!player->myIsAvailable)
+					continue;
 
-			matched[index] = newItem;
+				float dist = Dist(playerToMatch->myPreferenceVector, player->myPreferenceVector);
+
+				int index = -1;
+				for (int j = 19; j >= 0; --j)
+				{
+					if (matched[j]->myDist <= dist)
+						break;
+
+					index = j;
+				}
+
+				if (index == -1)
+					continue;
+
+				Matched* newItem = matched[19];
+				newItem->myDist = dist;
+				newItem->myId = player->myPlayerId;
+
+				for (int j = 19; j > index; --j)
+				{
+					matched[j] = matched[j - 1];
+				}
+
+				matched[index] = newItem;
+			}
 		}
 
 		for(auto j = 0; j < matchCount; ++j)

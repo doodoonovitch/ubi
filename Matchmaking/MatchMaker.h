@@ -61,8 +61,8 @@ private:
 			memcpy(myPreferenceVector, aPreferenceVector, sizeof(float[20]));
 		}
 
-		unsigned int	myPlayerId; 
-		float			myPreferenceVector[20]; 
+		float			myPreferenceVector[20];
+		unsigned int	myPlayerId;
 		bool			myIsAvailable; 
 	};
 
@@ -70,10 +70,81 @@ private:
 	Player*				FindPlayer(
 							unsigned int	aPlayerId) const;
 
+	class RWMutex
+	{
+	public:
 
-	Mutex				myLock; 
-	int					myNumPlayers; 
+		RWMutex();
+		~RWMutex();
+
+		void LockRead();
+		void UnlockRead();
+		void LockWrite();
+		void UnlockWrite();
+
+	private:
+
+		SRWLOCK				mySRWLock;
+	};
+
+	class ReaderLock
+	{
+	public:
+
+		ReaderLock(
+			RWMutex*	aLock)
+			: myLock(aLock)
+		{
+			myLock->LockRead();
+		}
+
+		ReaderLock(
+			RWMutex&	aLock)
+			: myLock(&aLock)
+		{
+			myLock->LockRead();
+		}
+
+		~ReaderLock()
+		{
+			myLock->UnlockRead();
+		}
+
+		RWMutex*	myLock;
+	};
+
+
+	class WriterLock
+	{
+	public:
+
+		WriterLock(
+			RWMutex*	aLock)
+			: myLock(aLock)
+		{
+			myLock->LockWrite();
+		}
+
+		WriterLock(
+			RWMutex&	aLock)
+			: myLock(&aLock)
+		{
+			myLock->LockWrite();
+		}
+
+		~WriterLock()
+		{
+			myLock->UnlockWrite();
+		}
+
+		RWMutex*	myLock;
+	};
+
+
+	RWMutex				myLock;
+	Mutex				myLockAdd;
 	Player				myPlayers[MAX_NUM_PLAYERS]; 
+	int					myNumPlayers;
 
 						MatchMaker(); 
 
