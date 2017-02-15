@@ -201,6 +201,7 @@ private:
 
 
 	Mutex				myLock; 
+	Mutex				myLockAdd;
 	int					myNumPlayers; 
 	Player*				myPlayers[MAX_NUM_PLAYERS]; 
 

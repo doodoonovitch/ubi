@@ -45,19 +45,20 @@
 		unsigned int	aPlayerId, 
 		float			aPreferenceVector[20])
 	{
-		MutexLock lock(myLock); 
-
 		Player* p = FindPlayer(aPlayerId);
 		if (p != nullptr)
 		{
+			MutexLock lock(myLock);
 			p->SetPreferences(aPreferenceVector);
 			return true;
 		}
 
+		MutexLock lock(myLockAdd);
+
 		if(myNumPlayers == MAX_NUM_PLAYERS)
 			return false; 
 
-		myPlayers[myNumPlayers] = new Player(aPlayerId, aPreferenceVector, false); 
+		myPlayers[myNumPlayers] = new Player(aPlayerId, aPreferenceVector, false);
 
 		++myNumPlayers; 
 
@@ -68,11 +69,10 @@
 	MatchMaker::SetPlayerAvailable(
 		unsigned int	aPlayerId)
 	{
-		MutexLock lock(myLock); 
-
 		Player* p = FindPlayer(aPlayerId);
 		if (p != nullptr)
 		{
+			MutexLock lock(myLock);
 			p->myIsAvailable = true;
 			return true;
 		}
@@ -84,11 +84,10 @@
 	MatchMaker::SetPlayerUnavailable(
 		unsigned int	aPlayerId)
 	{
-		MutexLock lock(myLock); 
-
 		Player* p = FindPlayer(aPlayerId);
 		if (p != nullptr)
 		{
+			MutexLock lock(myLock);
 			p->myIsAvailable = false;
 			return true;
 		}
@@ -124,14 +123,14 @@
 		unsigned int	aPlayerIds[20], 
 		int&			aOutNumPlayerIds)
 	{
-		MutexLock lock(myLock); 
-
 		const Player* playerToMatch = FindPlayer(aPlayerId);
 
 		if(!playerToMatch)
 			return false; 
 
 		MatchedBinHeap matched;
+
+		MutexLock lock(myLock);
 
 		Player** iterPlayers = myPlayers;
 		Player** endPlayers = myPlayers + myNumPlayers;
