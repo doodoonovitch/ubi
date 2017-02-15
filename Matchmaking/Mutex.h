@@ -11,33 +11,28 @@
 	public:
 
 		Mutex()
-			//: mySpinLock(0)
-			: mySysMutex(::CreateMutex(NULL, FALSE, NULL))
 		{
+			InitializeCriticalSection(&myCS);
 		}
 
 		~Mutex()
 		{
-			CloseHandle(mySysMutex);
-			mySysMutex = NULL;
+			DeleteCriticalSection(&myCS);
 		}
 
 		void
 		Lock()
 		{
-			//while(_InterlockedCompareExchange(&mySpinLock, 1, 0)); 
-			WaitForSingleObject(mySysMutex, INFINITE);
+			EnterCriticalSection(&myCS);
 		}
 
 		void 
 		Unlock()
 		{
-			//_InterlockedExchange(&mySpinLock, 0); 
-			ReleaseMutex(mySysMutex);
+			LeaveCriticalSection(&myCS);
 		}
 
-		//volatile LONG	mySpinLock; 
-		HANDLE mySysMutex;
+		CRITICAL_SECTION myCS;
 	};
 
 	class MutexLock
