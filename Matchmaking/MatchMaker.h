@@ -33,36 +33,40 @@ private:
 
 	// I don't care if you change anything below this 
 
-	class Player 
+	class Player
 	{
 	public:
 
-		Player(
-			unsigned int	aPlayerId,
-			float			aPreferenceVector[20],
-			bool			aIsAvailable
-		)
-			: myPlayerId(aPlayerId)
-			, myPreferenceVector(new float[20])
-			, myIsAvailable(aIsAvailable)
+		//Player(
+		//	unsigned int	aPlayerId,
+		//	float			aPreferenceVector[20],
+		//	bool			aIsAvailable
+		//)
+		//	: myPlayerId(aPlayerId)
+		//	, myPreferenceVector(new float[20])
+		//	, myIsAvailable(aIsAvailable)
+		//{
+		//	SetPreferences(aPreferenceVector);
+		//}
+
+		Player()
 		{
-			SetPreferences(aPreferenceVector);
 		}
 
 		~Player()
 		{
-			delete [] myPreferenceVector; 
+			//delete [] myPreferenceVector; 
 		}
 
 		void			SetPreferences(
-							float aPreferenceVector[20])
+			float aPreferenceVector[20])
 		{
 			memcpy(myPreferenceVector, aPreferenceVector, sizeof(float[20]));
 		}
 
-		unsigned int	myPlayerId; 
-		float*			myPreferenceVector; 
-		bool			myIsAvailable; 
+		unsigned int	myPlayerId;
+		float			myPreferenceVector[20];
+		bool			myIsAvailable;
 	};
 
 	class Matched
@@ -226,7 +230,7 @@ private:
 	};
 
 
-	Player*				myPlayers[MAX_NUM_PLAYERS];
+	Player				myPlayers[MAX_NUM_PLAYERS];
 	RWMutex				myLock;
 	Mutex				myLockAdd;
 	int					myNumPlayers;

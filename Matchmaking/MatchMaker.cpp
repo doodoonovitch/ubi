@@ -49,12 +49,6 @@ MatchMaker::RWMutex::UnlockWrite()
 
 	MatchMaker::~MatchMaker()
 	{
-		for (int i = 0; i < myNumPlayers; ++i)
-		{
-			delete myPlayers[i];
-		}
-
-		delete[] myPlayers;
 	}
 
 	MatchMaker&
@@ -66,15 +60,15 @@ MatchMaker::RWMutex::UnlockWrite()
 
 	MatchMaker::Player* MatchMaker::FindPlayer(unsigned int	aPlayerId) const
 	{
-		Player* const * iterPlayers = myPlayers;
-		Player* const * endPlayers = myPlayers + myNumPlayers;
+		Player const * iterPlayers = myPlayers;
+		Player const * endPlayers = myPlayers + myNumPlayers;
 
 		for (; iterPlayers < endPlayers; ++iterPlayers)
 		{
-			Player* p = *iterPlayers;
+			Player const * p = iterPlayers;
 			if (p->myPlayerId == aPlayerId)
 			{
-				return p;
+				return (Player *)p;
 			}
 		}
 
@@ -100,7 +94,11 @@ MatchMaker::RWMutex::UnlockWrite()
 		if (myNumPlayers == MAX_NUM_PLAYERS)
 			return false;
 
-		myPlayers[myNumPlayers] = new Player(aPlayerId, aPreferenceVector, false);
+		Player & newPlayer = myPlayers[myNumPlayers];
+
+		newPlayer.myPlayerId = aPlayerId;
+		newPlayer.myIsAvailable = false;
+		newPlayer.SetPreferences(aPreferenceVector);
 
 		++myNumPlayers;
 
@@ -139,8 +137,8 @@ MatchMaker::RWMutex::UnlockWrite()
 
 	float 
 	Dist(
-		float	aA[20], 
-		float	aB[20])
+		const float	aA[20], 
+		const float	aB[20])
 	{
 		//float dist2 = std::inner_product(aA, aA + 20, aB, 0.f, std::plus<float>(), [](float a, float b) 
 		//{
@@ -172,14 +170,13 @@ MatchMaker::RWMutex::UnlockWrite()
 
 		MatchedBinHeap matched;
 
-		Player** endPlayers = myPlayers + myNumPlayers;
-		Player** iterPlayers = myPlayers;
+		Player* player = myPlayers;
+		Player* endPlayer = myPlayers + myNumPlayers;
 
 		{
 			ReaderLock lock(myLock);
-			for (; iterPlayers < endPlayers; ++iterPlayers)
+			for (; player < endPlayer; ++player)
 			{
-				Player * player = *iterPlayers;
 				if (!player->myIsAvailable)
 					continue;
 
