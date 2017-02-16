@@ -226,9 +226,10 @@ private:
 	};
 
 
+	Player*				myPlayers[MAX_NUM_PLAYERS];
 	RWMutex				myLock;
+	Mutex				myLockAdd;
 	int					myNumPlayers;
-	Player*				myPlayers[MAX_NUM_PLAYERS]; 
 
 						MatchMaker(); 
 

@@ -49,6 +49,12 @@ MatchMaker::RWMutex::UnlockWrite()
 
 	MatchMaker::~MatchMaker()
 	{
+		for (int i = 0; i < myNumPlayers; ++i)
+		{
+			delete myPlayers[i];
+		}
+
+		delete[] myPlayers;
 	}
 
 	MatchMaker&
@@ -80,15 +86,16 @@ MatchMaker::RWMutex::UnlockWrite()
 		unsigned int	aPlayerId, 
 		float			aPreferenceVector[20])
 	{
-		WriterLock lock(myLock);
-
 		Player* p = FindPlayer(aPlayerId);
 
 		if (p != nullptr)
 		{
+			WriterLock lock(myLock);
 			p->SetPreferences(aPreferenceVector);
 			return true;
 		}
+
+		MutexLock lock(myLockAdd);
 
 		if (myNumPlayers == MAX_NUM_PLAYERS)
 			return false;
@@ -104,11 +111,10 @@ MatchMaker::RWMutex::UnlockWrite()
 	MatchMaker::SetPlayerAvailable(
 		unsigned int	aPlayerId)
 	{
-		WriterLock lock(myLock);
-
 		Player* p = FindPlayer(aPlayerId);
 		if (p != nullptr)
 		{
+			WriterLock lock(myLock);
 			p->myIsAvailable = true;
 			return true;
 		}
@@ -120,11 +126,10 @@ MatchMaker::RWMutex::UnlockWrite()
 	MatchMaker::SetPlayerUnavailable(
 		unsigned int	aPlayerId)
 	{
-		WriterLock lock(myLock);
-
 		Player* p = FindPlayer(aPlayerId);
 		if (p != nullptr)
 		{
+			WriterLock lock(myLock);
 			p->myIsAvailable = false;
 			return true;
 		}
@@ -160,8 +165,6 @@ MatchMaker::RWMutex::UnlockWrite()
 		unsigned int	aPlayerIds[20], 
 		int&			aOutNumPlayerIds)
 	{
-		ReaderLock lock(myLock);
-
 		const Player* playerToMatch = FindPlayer(aPlayerId);
 
 		if(!playerToMatch)
@@ -172,14 +175,17 @@ MatchMaker::RWMutex::UnlockWrite()
 		Player** endPlayers = myPlayers + myNumPlayers;
 		Player** iterPlayers = myPlayers;
 
-		for(; iterPlayers < endPlayers; ++iterPlayers)
 		{
-			Player * player = *iterPlayers;
-			if (!player->myIsAvailable)
-				continue;
+			ReaderLock lock(myLock);
+			for (; iterPlayers < endPlayers; ++iterPlayers)
+			{
+				Player * player = *iterPlayers;
+				if (!player->myIsAvailable)
+					continue;
 
-			float dist = Dist(playerToMatch->myPreferenceVector, player->myPreferenceVector);
-			matched.AddItem(player->myPlayerId, dist);
+				float dist = Dist(playerToMatch->myPreferenceVector, player->myPreferenceVector);
+				matched.AddItem(player->myPlayerId, dist);
+			}
 		}
 
 		matched.Export(aPlayerIds, aOutNumPlayerIds);
