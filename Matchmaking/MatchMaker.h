@@ -35,21 +35,24 @@ private:
 	{
 	public:
 
-		Player(
-			unsigned int	aPlayerId,
-			float			aPreferenceVector[20],
-			bool			aIsAvailable
-		)
-			: myPlayerId(aPlayerId)
-			, myPreferenceVector(new float[20])
-			, myIsAvailable(aIsAvailable)
-		{
-			SetPreferences(aPreferenceVector);
-		}
+		//Player(
+		//	unsigned int	aPlayerId,
+		//	float			aPreferenceVector[20],
+		//	bool			aIsAvailable
+		//)
+		//	: myPlayerId(aPlayerId)
+		//	, myPreferenceVector(new float[20])
+		//	, myIsAvailable(aIsAvailable)
+		//{
+		//	SetPreferences(aPreferenceVector);
+		//}
+
+		Player()
+		{ }
 
 		~Player()
 		{
-			delete [] myPreferenceVector; 
+			//delete [] myPreferenceVector; 
 		}
 
 		void			SetPreferences(
@@ -59,7 +62,7 @@ private:
 		}
 
 		unsigned int	myPlayerId; 
-		float*			myPreferenceVector; 
+		float			myPreferenceVector[20]; 
 		bool			myIsAvailable; 
 	};
 
@@ -70,7 +73,7 @@ private:
 
 	Mutex				myLock; 
 	int					myNumPlayers; 
-	Player*				myPlayers[MAX_NUM_PLAYERS]; 
+	Player				myPlayers[MAX_NUM_PLAYERS]; 
 
 						MatchMaker(); 
 

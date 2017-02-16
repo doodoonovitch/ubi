@@ -25,15 +25,15 @@
 
 	MatchMaker::Player* MatchMaker::FindPlayer(unsigned int	aPlayerId) const
 	{
-		Player* const * iterPlayers = myPlayers;
-		Player* const * endPlayers = myPlayers + myNumPlayers;
+		Player const * iterPlayers = myPlayers;
+		Player const * endPlayers = myPlayers + myNumPlayers;
 
 		for (; iterPlayers < endPlayers; ++iterPlayers)
 		{
-			Player* p = *iterPlayers;
+			Player const * p = iterPlayers;
 			if (p->myPlayerId == aPlayerId)
 			{
-				return p;
+				return (Player *)p;
 			}
 		}
 
@@ -57,7 +57,11 @@
 		if(myNumPlayers == MAX_NUM_PLAYERS)
 			return false; 
 
-		myPlayers[myNumPlayers] = new Player(aPlayerId, aPreferenceVector, false); 
+		Player & newPlayer = myPlayers[myNumPlayers];
+
+		newPlayer.myPlayerId = aPlayerId;
+		newPlayer.myIsAvailable = false;
+		newPlayer.SetPreferences(aPreferenceVector);
 
 		++myNumPlayers; 
 
@@ -98,8 +102,8 @@
 
 	float 
 	Dist(
-		float	aA[20], 
-		float	aB[20])
+		const float	aA[20], 
+		const float	aB[20])
 	{
 		//float dist2 = std::inner_product(aA, aA + 20, aB, 0.f, std::plus<float>(), [](float a, float b) 
 		//{
@@ -165,12 +169,11 @@
 		int & matchCount = aOutNumPlayerIds;
 		matchCount = 0;
 
-		Player** iterPlayers = myPlayers;
-		Player** endPlayers = myPlayers + myNumPlayers;
+		Player* player = myPlayers;
+		Player* endPlayer = myPlayers + myNumPlayers;
 
-		for (; iterPlayers < endPlayers && matchCount < 20; ++iterPlayers)
+		for (; player < endPlayer && matchCount < 20; ++player)
 		{
-			Player * player = *iterPlayers;
 			if (!player->myIsAvailable)
 				continue;
 
@@ -184,9 +187,8 @@
 		using std::sort;
 		sort(matched, matched + matchCount, MatchComp);
 
-		for(; iterPlayers < endPlayers; ++iterPlayers)
+		for(; player < endPlayer; ++player)
 		{
-			Player * player = *iterPlayers;
 			if (!player->myIsAvailable)
 				continue;
 
