@@ -4,6 +4,7 @@
 #define MAX_NUM_PLAYERS (1000000)
 
 #include "Mutex.h"
+#include <intrin.h>
 
 class MatchMaker
 {
@@ -31,7 +32,9 @@ private:
 
 	// I don't care if you change anything below this 
 
-	class Player 
+	typedef __declspec(align(16)) float PrefVec[20];
+
+	__declspec(align(16)) class Player
 	{
 	public:
 
@@ -61,10 +64,15 @@ private:
 			memcpy(myPreferenceVector, aPreferenceVector, sizeof(float[20]));
 		}
 
-		unsigned int	myPlayerId; 
-		float			myPreferenceVector[20]; 
+		PrefVec			myPreferenceVector;
+		unsigned int	myPlayerId;
 		bool			myIsAvailable; 
 	};
+
+	static float
+						Dist(
+							const PrefVec aA,
+							const PrefVec aB);
 
 
 	Player*				FindPlayer(
@@ -73,7 +81,7 @@ private:
 
 	Mutex				myLock; 
 	int					myNumPlayers; 
-	Player				myPlayers[MAX_NUM_PLAYERS]; 
+	Player*				myPlayers; 
 
 						MatchMaker(); 
 

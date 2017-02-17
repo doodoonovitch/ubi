@@ -6,14 +6,18 @@
 #include <numeric>
 #include <functional>
 #include <math.h>
+#include <malloc.h>
+#include <crtdbg.h>
 
 	MatchMaker::MatchMaker()
 		: myNumPlayers(0)
+		, myPlayers((Player *)_aligned_malloc(sizeof(Player) * MAX_NUM_PLAYERS, 16))
 	{
 	}
 
 	MatchMaker::~MatchMaker()
 	{
+		_aligned_free(myPlayers);
 	}
 
 	MatchMaker&
@@ -101,9 +105,9 @@
 	}
 
 	float 
-	Dist(
-		const float	aA[20], 
-		const float	aB[20])
+	MatchMaker::Dist(
+		const PrefVec aA, 
+		const PrefVec aB)
 	{
 		//float dist2 = std::inner_product(aA, aA + 20, aB, 0.f, std::plus<float>(), [](float a, float b) 
 		//{
@@ -111,15 +115,45 @@
 		//	res *= res;
 		//	return res;
 		//});
-		float dist2 = 0.f;
-		for (auto i = 0; i < 20; ++i)
+		//float dist2 = 0.f;
+		//for (auto i = 0; i < 20; ++i)
+		//{
+		//	float d2 = aA[i] - aB[i];
+		//	d2 *= d2;
+		//	dist2 += d2;
+		//}
+		//return dist2;
+
+		float const* pA = aA;
+		float const* pB = aB;
+
+		__m128 result;
+		__m128 a, b, d;
+		a = _mm_load_ps(pA);
+		b = _mm_load_ps(pB);
+		d = _mm_sub_ps(a, b);
+		result = _mm_mul_ps(d, d);
+		pA += 4;
+		pB += 4;
+
+		for (int i = 1; i < 5; ++i)
 		{
-			float d2 = aA[i] - aB[i];
-			d2 *= d2;
-			dist2 += d2;
+			a = _mm_load_ps(pA);
+			b = _mm_load_ps(pB);
+			d = _mm_sub_ps(a, b);
+			__m128 m = _mm_mul_ps(d, d);
+			result = _mm_add_ps(result, m);
+
+			pA += 4;
+			pB += 4;
 		}
 
-		return dist2;
+		result = _mm_hadd_ps(result, result);
+		result = _mm_hadd_ps(result, result);
+
+		//_ASSERT(fabs(result.m128_f32[0] - dist2) <= 0.000001);
+
+		return result.m128_f32[0];
 	}
 
 	class Matched
