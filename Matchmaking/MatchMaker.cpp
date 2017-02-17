@@ -11,7 +11,7 @@
 
 	MatchMaker::MatchMaker()
 		: myNumPlayers(0)
-		, myPlayers((Player *)_aligned_malloc(sizeof(Player) * MAX_NUM_PLAYERS, 16))
+		, myPlayers((Player *)_aligned_malloc(sizeof(Player) * MAX_NUM_PLAYERS, 32))
 	{
 	}
 
@@ -127,33 +127,33 @@
 		float const* pA = aA;
 		float const* pB = aB;
 
-		__m128 result;
-		__m128 a, b, d;
-		a = _mm_load_ps(pA);
-		b = _mm_load_ps(pB);
-		d = _mm_sub_ps(a, b);
-		result = _mm_mul_ps(d, d);
-		pA += 4;
-		pB += 4;
+		__m256 result;
+		__m256 a, b, d;
+		a = _mm256_load_ps(pA);
+		b = _mm256_load_ps(pB);
+		d = _mm256_sub_ps(a, b);
+		result = _mm256_mul_ps(d, d);
+		pA += 8;
+		pB += 8;
 
 		for (int i = 1; i < 5; ++i)
 		{
-			a = _mm_load_ps(pA);
-			b = _mm_load_ps(pB);
-			d = _mm_sub_ps(a, b);
-			__m128 m = _mm_mul_ps(d, d);
-			result = _mm_add_ps(result, m);
+			a = _mm256_load_ps(pA);
+			b = _mm256_load_ps(pB);
+			d = _mm256_sub_ps(a, b);
+			__m256 m = _mm256_mul_ps(d, d);
+			result = _mm256_add_ps(result, m);
 
 			pA += 4;
 			pB += 4;
 		}
 
-		result = _mm_hadd_ps(result, result);
-		result = _mm_hadd_ps(result, result);
+		result = _mm256_hadd_ps(result, result);
+		result = _mm256_hadd_ps(result, result);
 
-		//_ASSERT(fabs(result.m128_f32[0] - dist2) <= 0.000001);
+		//_ASSERT(fabs(result.m256_f32[0] - dist2) <= 0.000001);
 
-		return result.m128_f32[0];
+		return result.m256_f32[0];
 	}
 
 	class Matched

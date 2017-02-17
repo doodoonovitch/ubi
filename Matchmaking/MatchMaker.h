@@ -32,9 +32,9 @@ private:
 
 	// I don't care if you change anything below this 
 
-	typedef __declspec(align(16)) float PrefVec[20];
+	typedef __declspec(align(32)) float PrefVec[24];
 
-	__declspec(align(16)) class Player
+	__declspec(align(32)) class Player
 	{
 	public:
 
@@ -62,6 +62,7 @@ private:
 							float aPreferenceVector[20])
 		{
 			memcpy(myPreferenceVector, aPreferenceVector, sizeof(float[20]));
+			memset(myPreferenceVector + 20, 0, sizeof(float[4]));
 		}
 
 		PrefVec			myPreferenceVector;
