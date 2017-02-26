@@ -171,10 +171,10 @@ MatchMaker::RWMutex::UnlockWrite()
 
 	static bool 
 	MatchComp(
-		Matched*	aA, 
-		Matched*	aB)
+		const Matched&	aA, 
+		const Matched&	aB)
 	{
-		return (aA->myDist < aB->myDist);
+		return (aA.myDist < aB.myDist);
 	}
 
 	bool
@@ -189,15 +189,7 @@ MatchMaker::RWMutex::UnlockWrite()
 			return false;
 
 		Matched matchedItems[20];
-		Matched* matched[20];
-
-		Matched* pIter = matchedItems;
-		Matched* pEnd = matchedItems + 20;
-		Matched** p = matched;
-		for (; pIter < pEnd; ++pIter, ++p)
-		{
-			*p = pIter;
-		}
+		Matched* matched = matchedItems;
 
 		int & matchCount = aOutNumPlayerIds;
 		matchCount = 0;
@@ -213,9 +205,9 @@ MatchMaker::RWMutex::UnlockWrite()
 				if (!player->myIsAvailable)
 					continue;
 
-				Matched* pItem = matched[matchCount];
-				pItem->myId = player->myPlayerId;
-				pItem->myDist = Dist(player->myPreferenceVector, playerToMatch->myPreferenceVector);
+				Matched& item = matchedItems[matchCount];
+				item.myId = player->myPlayerId;
+				item.myDist = Dist(player->myPreferenceVector, playerToMatch->myPreferenceVector);
 				++matchCount;
 			}
 
@@ -232,7 +224,7 @@ MatchMaker::RWMutex::UnlockWrite()
 				int index = -1;
 				for (int j = 19; j >= 0; --j)
 				{
-					if (matched[j]->myDist <= dist)
+					if (matched[j].myDist <= dist)
 						break;
 
 					index = j;
@@ -241,21 +233,19 @@ MatchMaker::RWMutex::UnlockWrite()
 				if (index == -1)
 					continue;
 
-				Matched* newItem = matched[19];
-				newItem->myDist = dist;
-				newItem->myId = player->myPlayerId;
-
 				for (int j = 19; j > index; --j)
 				{
 					matched[j] = matched[j - 1];
 				}
 
-				matched[index] = newItem;
+				Matched& newItem = matched[index];
+				newItem.myDist = dist;
+				newItem.myId = player->myPlayerId;
 			}
 		}
 
 		for(auto j = 0; j < matchCount; ++j)
-			aPlayerIds[j] = matched[j]->myId; 
+			aPlayerIds[j] = matched[j].myId; 
 
 		return true; 
 	}
