@@ -113,7 +113,7 @@
 	#include "GenerateTestSamples.h"
 	static GenerateTestSamples generateTestSamples(TEST_SUITE_PREFIX_1 TEST_SUITE_PREFIX_2 "TestSuite");
 #else
-	//#define USE_TEST_SUITES
+	#define USE_TEST_SUITES
 	#ifdef USE_TEST_SUITES
 
 	#ifdef USE_PREDICTABLE_RANDOMNESS
@@ -185,7 +185,7 @@ namespace
 		void*	aData)
 	{
 #ifdef USE_TEST_SUITES
-		int testSampleId = reinterpret_cast<int>(aData);
+		int testSampleId = static_cast<int>(reinterpret_cast<uintptr_t>(aData));
 
 		for (int testSample = 0; testSample < Test::TestPerThreadCount; ++testSample)
 		{
@@ -284,7 +284,8 @@ public:
 	uintptr_t
 	Start()
 	{
-		uintptr_t handle = _beginthread(Run, 0, (void*)myTestSampleId);
+		uintptr_t param = myTestSampleId;
+		uintptr_t handle = _beginthread(Run, 0, (void*)param);
 		return handle;
 	}
 
@@ -354,7 +355,8 @@ int main(int argc, char* argv[])
 
 	for (auto i = 0; i < TestThreadCount; i++)
 	{
-		Run((void*)i);
+		uintptr_t param = i;
+		Run((void*)param);
 	}
 	
 #ifdef USE_TEST_SUITES
