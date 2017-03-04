@@ -31,21 +31,40 @@ private:
 
 	// I don't care if you change anything below this 
 
-	class Player 
+	class Matched
 	{
 	public:
 
-		//Player(
-		//	unsigned int	aPlayerId,
-		//	float			aPreferenceVector[20],
-		//	bool			aIsAvailable
-		//)
-		//	: myPlayerId(aPlayerId)
-		//	, myPreferenceVector(new float[20])
-		//	, myIsAvailable(aIsAvailable)
-		//{
-		//	SetPreferences(aPreferenceVector);
-		//}
+		Matched()
+			: myDist(-1.f)
+		{
+		}
+
+		float			myDist;
+		unsigned int	myId;
+	};
+
+	class MatchedResult
+	{
+	public:
+
+		MatchedResult()
+			: myResults(nullptr)
+			, myCount(0)
+		{ }
+
+		~MatchedResult()
+		{
+			delete[] myResults;
+		}
+
+		Matched*		myResults;
+		size_t			myCount;
+	};
+
+	class Player 
+	{
+	public:
 
 		Player()
 		{ }
@@ -66,13 +85,67 @@ private:
 		bool			myIsAvailable; 
 	};
 
+	class ComputeTaskArg
+	{
+	public:
+
+		enum class ETaskType
+		{
+			Compute,
+			Exit
+		};
+
+		const Player*	myPlayerToMatch;
+		size_t			myPlayerToMatchIndex;
+		size_t			myBeginIndex;
+		size_t			myEndIndex;
+		ETaskType		myTaskType;
+
+		void			Reset(
+							const Player*	aPlayerToMatch,
+							size_t			aPlayerToMatchIndex,
+							size_t			aBeginIndex,
+							size_t			aEndIndex,
+							ETaskType		aTaskType);
+	};
+
+	static void			TaskHandler(
+							void*			arg);
+
+	void				RunTask();
+
+	void				StartTasks(unsigned int taskCount);
+
+	void				ComputeDistRange(
+							const Player&	aPlayerToMatch,
+							size_t			aPlayerToMatchIndex,
+							size_t			aBeginIndex,
+							size_t			aEndIndex,
+							MatchedResult&	aOutResults);
+
+
+	static bool			MatchComp(
+							const Matched&	aA,
+							const Matched&	aB)
+	{
+		return (aA.myDist < aB.myDist);
+	}
 
 	Player*				FindPlayer(
-							unsigned int	aPlayerId) const;
+							unsigned int	aPlayerId,
+							size_t&			aOutPlayerIndex) const;
 
+	MatchedResult*		myComputeResults;
+	ComputeTaskArg*		myComputeTaskArgs;			// task pool 
+	HANDLE*				myComputeTaskThreads;		// threads pool
+	unsigned int		myNumComputeTasks;			// task pool count
+	volatile LONG 		myComputeTaskArgIndex;		// next task pool to execute (if myComputeTaskArgIndex < myNumComputeTasks)
+	volatile LONG 		myComputeTaskDoneCounter;	// count of executed tasks
+	HANDLE				myRunComputeTaskSem;		// available tasks to execute (semaphore)
+	HANDLE				myComputeTaskDoneEvent;		// all tasks has been done
 
 	Mutex				myLock; 
-	int					myNumPlayers; 
+	size_t				myNumPlayers; 
 	Player				myPlayers[MAX_NUM_PLAYERS]; 
 
 						MatchMaker(); 

@@ -5,15 +5,113 @@
 #include <algorithm>
 #include <numeric>
 #include <functional>
+#include <thread>
 #include <math.h>
+
+
+	void
+	MatchMaker::ComputeTaskArg::Reset(
+		const Player*	aPlayerToMatch,
+		size_t			aPlayerToMatchIndex,
+		size_t			aBeginIndex,
+		size_t			aEndIndex,
+		ETaskType		aTaskType)
+	{
+		myPlayerToMatch = aPlayerToMatch;
+		myPlayerToMatchIndex = aPlayerToMatchIndex;
+		myBeginIndex = aBeginIndex;
+		myEndIndex = aEndIndex;
+		myTaskType = aTaskType;
+	}
+
+	void
+	MatchMaker::TaskHandler(
+		void*			arg)
+	{
+		MatchMaker * matchMaker = (MatchMaker*)arg;
+		matchMaker->RunTask();
+	}
+
+	void
+	MatchMaker::RunTask()
+	{
+		bool end = false;
+		while(!end)
+		{
+			DWORD waitResult = WaitForSingleObject(myRunComputeTaskSem, INFINITE);
+			if (waitResult == WAIT_OBJECT_0)
+			{
+				LONG argIndex = InterlockedIncrement(&myComputeTaskArgIndex);
+				LONG taskIndex = argIndex - 1;
+
+				ComputeTaskArg& arg = myComputeTaskArgs[taskIndex];
+
+				if (arg.myTaskType == ComputeTaskArg::ETaskType::Compute)
+				{
+					ComputeDistRange(*arg.myPlayerToMatch, arg.myPlayerToMatchIndex, arg.myBeginIndex, arg.myEndIndex, myComputeResults[taskIndex]);
+				}
+				else if(arg.myTaskType == ComputeTaskArg::ETaskType::Exit)
+				{
+					end = true;
+				}
+
+				LONG counter = InterlockedDecrement(&myComputeTaskDoneCounter);
+				if (counter == 0)
+				{
+					SetEvent(myComputeTaskDoneEvent);
+				}
+			}
+		}
+	}
+
+	void
+	MatchMaker::StartTasks(unsigned int taskCount)
+	{
+		myComputeTaskArgIndex = 0;
+		myComputeTaskDoneCounter = taskCount;
+
+		ReleaseSemaphore(myRunComputeTaskSem, taskCount, NULL);
+	}
+
+
 
 	MatchMaker::MatchMaker()
 		: myNumPlayers(0)
+		, myComputeTaskArgIndex(0)
+		, myComputeTaskDoneCounter(0)
 	{
+		myNumComputeTasks = std::thread::hardware_concurrency();
+		printf("Number of threads : %u\n", myNumComputeTasks);
+
+		myRunComputeTaskSem = CreateSemaphore(NULL, 0, myNumComputeTasks, NULL);
+		myComputeTaskDoneEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+
+		myComputeTaskArgs = new ComputeTaskArg[myNumComputeTasks];
+		myComputeResults = new MatchedResult[myNumComputeTasks];
+
+		size_t matchedSize = (MAX_NUM_PLAYERS / myNumComputeTasks) + MAX_NUM_PLAYERS;
+		
+		myComputeTaskThreads = new HANDLE[myNumComputeTasks];
+		for (unsigned int i = 0; i < myNumComputeTasks; ++i)
+		{
+			myComputeResults[i].myResults = new Matched[matchedSize];
+			myComputeTaskThreads[i] = (HANDLE)_beginthread(MatchMaker::TaskHandler, 0, (void*)this);
+		}		
 	}
 
 	MatchMaker::~MatchMaker()
 	{
+		for (unsigned int i = 0; i < myNumComputeTasks; ++i)
+		{
+			ComputeTaskArg& arg = myComputeTaskArgs[i];
+			arg.myTaskType = ComputeTaskArg::ETaskType::Exit;
+		}
+		StartTasks(myNumComputeTasks);
+
+		CloseHandle(myRunComputeTaskSem);
+		CloseHandle(myComputeTaskDoneEvent);
+
+		delete[] myComputeTaskArgs;
 	}
 
 	MatchMaker&
@@ -23,12 +121,15 @@
 		return *instance; 
 	}
 
-	MatchMaker::Player* MatchMaker::FindPlayer(unsigned int	aPlayerId) const
+	MatchMaker::Player*
+	MatchMaker::FindPlayer(
+			unsigned int	aPlayerId,
+			size_t&			aOutPlayerIndex) const
 	{
 		Player const * iterPlayers = myPlayers;
 		Player const * endPlayers = myPlayers + myNumPlayers;
 
-		for (; iterPlayers < endPlayers; ++iterPlayers)
+		for (aOutPlayerIndex = 0; iterPlayers < endPlayers; ++iterPlayers, ++aOutPlayerIndex)
 		{
 			Player const * p = iterPlayers;
 			if (p->myPlayerId == aPlayerId)
@@ -47,7 +148,8 @@
 	{
 		MutexLock lock(myLock); 
 
-		Player* p = FindPlayer(aPlayerId);
+		size_t playerIndex;
+		Player* p = FindPlayer(aPlayerId, playerIndex);
 		if (p != nullptr)
 		{
 			p->SetPreferences(aPreferenceVector);
@@ -65,6 +167,10 @@
 
 		++myNumPlayers; 
 
+		if (myNumPlayers % 100 == 0)
+			printf("************ num players in system %u ********\n", myNumPlayers);
+
+
 		return true; 
 	}
 
@@ -74,7 +180,8 @@
 	{
 		MutexLock lock(myLock); 
 
-		Player* p = FindPlayer(aPlayerId);
+		size_t playerIndex;
+		Player* p = FindPlayer(aPlayerId, playerIndex);
 		if (p != nullptr)
 		{
 			p->myIsAvailable = true;
@@ -90,7 +197,8 @@
 	{
 		MutexLock lock(myLock); 
 
-		Player* p = FindPlayer(aPlayerId);
+		size_t playerIndex;
+		Player* p = FindPlayer(aPlayerId, playerIndex);
 		if (p != nullptr)
 		{
 			p->myIsAvailable = false;
@@ -122,26 +230,6 @@
 		return dist2;
 	}
 
-	class Matched
-	{
-	public:
-
-		Matched()
-			: myDist(-1.f)
-		{ }
-
-		float			myDist; 
-		unsigned int	myId; 
-	};
-
-	static bool 
-	MatchComp(
-		Matched*	aA, 
-		Matched*	aB)
-	{
-		return (aA->myDist < aB->myDist);
-	}
-
 	bool
 	MatchMaker::MatchMake(
 		unsigned int	aPlayerId, 
@@ -150,76 +238,128 @@
 	{
 		MutexLock lock(myLock); 
 
-		const Player* playerToMatch = FindPlayer(aPlayerId);
+		size_t playerToMatchIndex;
+		const Player* playerToMatch = FindPlayer(aPlayerId, playerToMatchIndex);
 
 		if(!playerToMatch)
 			return false; 
 
-		Matched matchedItems[20];
-		Matched* matched[20];
+		MatchedResult& results = myComputeResults[0];
+		size_t numPlayers = myNumPlayers;
 
-		Matched* pIter = matchedItems;
-		Matched* pEnd = matchedItems + 20;
-		Matched** p = matched;
-		for(; pIter < pEnd; ++pIter, ++p)
+		if (numPlayers < 20 || numPlayers < myNumComputeTasks)
 		{
-			*p = pIter;
-		}
-
-		int & matchCount = aOutNumPlayerIds;
-		matchCount = 0;
-
-		Player* player = myPlayers;
-		Player* endPlayer = myPlayers + myNumPlayers;
-
-		for (; player < endPlayer && matchCount < 20; ++player)
-		{
-			if (!player->myIsAvailable)
-				continue;
-
-			Matched* pItem = matched[matchCount];
-			pItem->myId = player->myPlayerId;
-			pItem->myDist = Dist(player->myPreferenceVector, playerToMatch->myPreferenceVector);
-			++matchCount;
-
-		}
-
-		using std::sort;
-		sort(matched, matched + matchCount, MatchComp);
-
-		for(; player < endPlayer; ++player)
-		{
-			if (!player->myIsAvailable)
-				continue;
-
-			float dist = Dist(playerToMatch->myPreferenceVector, player->myPreferenceVector);
-
-			int index = -1; 
-			for(int j = 19; j >= 0; --j)
+			ComputeDistRange(*playerToMatch, playerToMatchIndex, 0, numPlayers, results);
+			std::sort(results.myResults, results.myResults + results.myCount, MatchComp);
+			if (results.myCount > 20)
 			{
-				if(matched[j]->myDist <= dist)
-					break; 
-
-				index = j; 
+				results.myCount = 20;
+			}
+		}
+		else
+		{
+			size_t nbItemPerThread = numPlayers / myNumComputeTasks;
+			size_t itemIndex = 0;
+			for (size_t i = 0; i < myNumComputeTasks; ++i)
+			{
+				ComputeTaskArg& arg = myComputeTaskArgs[i];
+				arg.Reset(playerToMatch, playerToMatchIndex, itemIndex, (i + 1) == myNumComputeTasks ? numPlayers : itemIndex + nbItemPerThread, ComputeTaskArg::ETaskType::Compute);
+				itemIndex += nbItemPerThread;
 			}
 
-			if(index == -1)
-				continue; 
+			StartTasks(myNumComputeTasks);
 
-			Matched* newItem = matched[19];
-			newItem->myDist = dist;
-			newItem->myId = player->myPlayerId;
+			DWORD waitResult = WaitForSingleObject(myComputeTaskDoneEvent, INFINITE);
 
-			for(int j = 19; j > index; --j)
+			for (size_t taskIndex = 1; taskIndex < myNumComputeTasks && results.myCount < 20; ++taskIndex)
 			{
-				matched[j] = matched[j - 1];
+				MatchedResult& resultsToMerge = myComputeResults[taskIndex];
+				while (resultsToMerge.myCount > 0 && results.myCount < 20)
+				{
+					--resultsToMerge.myCount;
+					results.myResults[results.myCount] = resultsToMerge.myResults[resultsToMerge.myCount];
+					++results.myCount;
+				}
 			}
 
-			matched[index] = newItem;
+			std::sort(results.myResults, results.myResults + results.myCount, MatchComp);
+
+			if (results.myCount > 20)
+			{
+				results.myCount = 20;
+
+				for (size_t taskIndex = 1; taskIndex < myNumComputeTasks; ++taskIndex)
+				{
+					MatchedResult& resultsToMerge = myComputeResults[taskIndex];
+
+					while (resultsToMerge.myCount > 0)
+					{
+						--resultsToMerge.myCount;
+						Matched& itemToMerge = resultsToMerge.myResults[resultsToMerge.myCount];
+
+						int index = -1;
+						for (int j = 19; j >= 0; --j)
+						{
+							if (results.myResults[j].myDist <= itemToMerge.myDist)
+								break;
+
+							index = j;
+						}
+
+						if (index == -1)
+							continue;
+
+						for (int j = 19; j > index; --j)
+						{
+							results.myResults[j] = results.myResults[j - 1];
+						}
+
+						results.myResults[index] = itemToMerge;
+					}
+				}
+			}
 		}
 
-		for(auto j = 0; j < matchCount; ++j)
-			aPlayerIds[j] = matched[j]->myId; 
+		aOutNumPlayerIds = (int)results.myCount;
+
+		for(auto j = 0; j < aOutNumPlayerIds; ++j)
+			aPlayerIds[j] = results.myResults[j].myId;
 
 		return true; 
 	}
+
+
+	void
+		MatchMaker::ComputeDistRange(
+			const Player&	aPlayerToMatch,
+			size_t			aPlayerToMatchIndex,
+			size_t			aBeginIndex,
+			size_t			aEndIndex,
+			MatchedResult&	aOutResults)
+	{
+		const Player* end = myPlayers + aEndIndex;
+		const Player* player = myPlayers + aBeginIndex;
+		for (size_t iter = aBeginIndex; iter < aEndIndex; ++iter, ++player)
+		{
+			if (!player->myIsAvailable)
+				continue;
+
+			Matched& target = aOutResults.myResults[aOutResults.myCount];
+			++aOutResults.myCount;
+
+			target.myId = player->myPlayerId;
+
+			if (player == &aPlayerToMatch)
+			{
+				target.myDist = 0.f;
+			}
+			else
+			{
+				target.myDist = Dist(aPlayerToMatch.myPreferenceVector, player->myPreferenceVector);
+			}
+		}
+
+		//std::sort(aOutResults.myResults, aOutResults.myResults + aOutResults.myCount, MatchComp);
+	}
+
+
