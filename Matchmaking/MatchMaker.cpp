@@ -10,6 +10,15 @@
 	MatchMaker::MatchMaker()
 		: myNumPlayers(0)
 	{
+		for (int i = 0; i < 256; ++i)
+		{
+			for (int j = 0; j < 256; ++j)
+			{
+				int v = i - j;
+				v *= v;
+				myDistCache[i][j] = v;
+			}
+		}
 	}
 
 	MatchMaker::~MatchMaker()
@@ -45,12 +54,18 @@
 		unsigned int	aPlayerId, 
 		float			aPreferenceVector[20])
 	{
+		Preference prefVec[20];
+		for (int i = 0; i < 20; ++i)
+		{
+			prefVec[i] = static_cast<Preference>(aPreferenceVector[i] * 255);
+		}
+
 		MutexLock lock(myLock); 
 
 		Player* p = FindPlayer(aPlayerId);
 		if (p != nullptr)
 		{
-			p->SetPreferences(aPreferenceVector);
+			p->SetPreferences(prefVec);
 			return true;
 		}
 
@@ -61,7 +76,7 @@
 
 		newPlayer.myPlayerId = aPlayerId;
 		newPlayer.myIsAvailable = false;
-		newPlayer.SetPreferences(aPreferenceVector);
+		newPlayer.SetPreferences(prefVec);
 
 		++myNumPlayers; 
 
@@ -100,42 +115,22 @@
 		return false; 
 	}
 
-	float 
-	Dist(
-		const float	aA[20], 
-		const float	aB[20])
+	int 
+	MatchMaker::Dist(
+		const Preference	aA[20],
+		const Preference	aB[20]) const
 	{
-		//float dist2 = std::inner_product(aA, aA + 20, aB, 0.f, std::plus<float>(), [](float a, float b) 
-		//{
-		//	float res = a - b;
-		//	res *= res;
-		//	return res;
-		//});
-		float dist2 = 0.f;
+		int dist2 = 0;
 		for (auto i = 0; i < 20; ++i)
 		{
-			float d2 = aA[i] - aB[i];
-			d2 *= d2;
-			dist2 += d2;
+			dist2 += myDistCache[aA[i]][aB[i]];
 		}
 
 		return dist2;
 	}
 
-	class Matched
-	{
-	public:
-
-		Matched()
-			: myDist(-1.f)
-		{ }
-
-		float			myDist; 
-		unsigned int	myId; 
-	};
-
-	static bool 
-	MatchComp(
+	bool 
+	MatchMaker::MatchComp(
 		Matched*	aA, 
 		Matched*	aB)
 	{
@@ -192,7 +187,7 @@
 			if (!player->myIsAvailable)
 				continue;
 
-			float dist = Dist(playerToMatch->myPreferenceVector, player->myPreferenceVector);
+			int dist = Dist(playerToMatch->myPreferenceVector, player->myPreferenceVector);
 
 			int index = -1; 
 			for(int j = 19; j >= 0; --j)

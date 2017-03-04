@@ -31,6 +31,21 @@ private:
 
 	// I don't care if you change anything below this 
 
+	typedef unsigned char Preference;
+
+	class Matched
+	{
+	public:
+
+		Matched()
+			: myDist(-1)
+		{
+		}
+
+		int				myDist;
+		unsigned int	myId;
+	};
+
 	class Player 
 	{
 	public:
@@ -56,13 +71,13 @@ private:
 		}
 
 		void			SetPreferences(
-							float aPreferenceVector[20])
+							Preference aPreferenceVector[20])
 		{
-			memcpy(myPreferenceVector, aPreferenceVector, sizeof(float[20]));
+			memcpy(myPreferenceVector, aPreferenceVector, sizeof(Preference[20]));
 		}
 
 		unsigned int	myPlayerId; 
-		float			myPreferenceVector[20]; 
+		Preference		myPreferenceVector[20];
 		bool			myIsAvailable; 
 	};
 
@@ -70,6 +85,15 @@ private:
 	Player*				FindPlayer(
 							unsigned int	aPlayerId) const;
 
+	int					myDistCache[256][256];
+
+	int					Dist(
+							const Preference aA[20],
+							const Preference aB[20]) const;
+
+	static bool MatchComp(
+							Matched*	aA,
+							Matched*	aB);
 
 	Mutex				myLock; 
 	int					myNumPlayers; 
