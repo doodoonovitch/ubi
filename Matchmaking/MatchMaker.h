@@ -31,16 +31,18 @@ private:
 
 	// I don't care if you change anything below this 
 
+	typedef unsigned char Preference;
+
 	class Matched
 	{
 	public:
 
 		Matched()
-			: myDist(-1.f)
+			: myDist(-1)
 		{
 		}
 
-		float			myDist;
+		int				myDist;
 		unsigned int	myId;
 	};
 
@@ -75,13 +77,13 @@ private:
 		}
 
 		void			SetPreferences(
-							float aPreferenceVector[20])
+							Preference aPreferenceVector[20])
 		{
-			memcpy(myPreferenceVector, aPreferenceVector, sizeof(float[20]));
+			memcpy(myPreferenceVector, aPreferenceVector, sizeof(Preference[20]));
 		}
 
 		unsigned int	myPlayerId; 
-		float			myPreferenceVector[20]; 
+		Preference		myPreferenceVector[20];
 		bool			myIsAvailable; 
 	};
 
@@ -123,6 +125,9 @@ private:
 							size_t			aEndIndex,
 							MatchedResult&	aOutResults);
 
+	int					Dist(
+		const Preference aA[20],
+		const Preference aB[20]) const;
 
 	static bool			MatchComp(
 							const Matched&	aA,
@@ -135,6 +140,7 @@ private:
 							unsigned int	aPlayerId,
 							size_t&			aOutPlayerIndex) const;
 
+	int					myDistCache[256][256];
 	MatchedResult*		myComputeResults;
 	ComputeTaskArg*		myComputeTaskArgs;			// task pool 
 	HANDLE*				myComputeTaskThreads;		// threads pool

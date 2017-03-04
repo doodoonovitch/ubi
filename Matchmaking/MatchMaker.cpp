@@ -80,6 +80,16 @@
 		, myComputeTaskArgIndex(0)
 		, myComputeTaskDoneCounter(0)
 	{
+		for (int i = 0; i < 256; ++i)
+		{
+			for (int j = 0; j < 256; ++j)
+			{
+				int v = i - j;
+				v *= v;
+				myDistCache[i][j] = v;
+			}
+		}
+
 		myNumComputeTasks = std::thread::hardware_concurrency();
 		printf("Number of threads : %u\n", myNumComputeTasks);
 
@@ -146,13 +156,19 @@
 		unsigned int	aPlayerId, 
 		float			aPreferenceVector[20])
 	{
+		Preference prefVec[20];
+		for (int i = 0; i < 20; ++i)
+		{
+			prefVec[i] = static_cast<Preference>(aPreferenceVector[i] * 255);
+		}
+
 		MutexLock lock(myLock); 
 
 		size_t playerIndex;
 		Player* p = FindPlayer(aPlayerId, playerIndex);
 		if (p != nullptr)
 		{
-			p->SetPreferences(aPreferenceVector);
+			p->SetPreferences(prefVec);
 			return true;
 		}
 
@@ -163,7 +179,7 @@
 
 		newPlayer.myPlayerId = aPlayerId;
 		newPlayer.myIsAvailable = false;
-		newPlayer.SetPreferences(aPreferenceVector);
+		newPlayer.SetPreferences(prefVec);
 
 		++myNumPlayers; 
 
@@ -208,23 +224,15 @@
 		return false; 
 	}
 
-	float 
-	Dist(
-		const float	aA[20], 
-		const float	aB[20])
+	int 
+	MatchMaker::Dist(
+		const Preference	aA[20],
+		const Preference	aB[20]) const
 	{
-		//float dist2 = std::inner_product(aA, aA + 20, aB, 0.f, std::plus<float>(), [](float a, float b) 
-		//{
-		//	float res = a - b;
-		//	res *= res;
-		//	return res;
-		//});
-		float dist2 = 0.f;
+		int dist2 = 0;
 		for (auto i = 0; i < 20; ++i)
 		{
-			float d2 = aA[i] - aB[i];
-			d2 *= d2;
-			dist2 += d2;
+			dist2 += myDistCache[aA[i]][aB[i]];
 		}
 
 		return dist2;
@@ -351,7 +359,7 @@
 
 			if (player == &aPlayerToMatch)
 			{
-				target.myDist = 0.f;
+				target.myDist = 0;
 			}
 			else
 			{
