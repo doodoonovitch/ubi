@@ -65,6 +65,9 @@
 
 		++myNumPlayers; 
 
+		if (myNumPlayers % 100 == 0)
+			printf("************ num players in system %u ********\n", myNumPlayers);
+
 		return true; 
 	}
 
