@@ -337,6 +337,7 @@
 			size_t			aEndIndex,
 			MatchedResult&	aOutResults)
 	{
+		aOutResults.myCount = 0;
 		const Player* end = myPlayers + aEndIndex;
 		const Player* player = myPlayers + aBeginIndex;
 		for (size_t iter = aBeginIndex; iter < aEndIndex; ++iter, ++player)
