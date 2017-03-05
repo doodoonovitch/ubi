@@ -110,6 +110,8 @@
 		, myFindTaskPlayer(nullptr)
 		, myFindTaskPlayerIndex(MAX_NUM_PLAYERS)
 		, myFindTaskPlayerFound(false)
+		, myCacheResultPlayer(nullptr)
+		, myCacheHitCount(0)
 	{
 		for (int i = 0; i < 256; ++i)
 		{
@@ -230,6 +232,8 @@
 		Player* p = FindPlayer(aPlayerId, playerIndex);
 		if (p != nullptr)
 		{
+			if (p->myIsAvailable)
+				myCacheResultPlayer = nullptr;
 			p->SetPreferences(prefVec);
 			return true;
 		}
@@ -246,7 +250,7 @@
 		++myNumPlayers; 
 
 		if (myNumPlayers % 100 == 0)
-			printf("************ num available players in system %u / %u ********\n", myAvailablePlayers, myNumPlayers);
+			printf("\t\t ===> num available players in system %u / %u\n", myAvailablePlayers, myNumPlayers);
 
 
 		return true; 
@@ -264,6 +268,8 @@
 		{
 			if (!p->myIsAvailable)
 			{
+				myCacheResultPlayer = nullptr;
+
 				p->myIsAvailable = true;
 				if (playerIndex > myAvailablePlayers)
 				{
@@ -289,6 +295,8 @@
 		{
 			if (p->myIsAvailable)
 			{
+				myCacheResultPlayer = nullptr;
+
 				p->myIsAvailable = false;
 				if ((playerIndex + 1) < myAvailablePlayers)
 				{
@@ -322,88 +330,101 @@
 		unsigned int	aPlayerIds[20], 
 		int&			aOutNumPlayerIds)
 	{
-		MutexLock lock(myLock); 
-
-		size_t playerToMatchIndex;
-		const Player* playerToMatch = FindPlayer(aPlayerId, playerToMatchIndex);
-
-		if(!playerToMatch)
-			return false; 
-
 		MatchedResult& results = myComputeResults[0];
-		size_t numPlayers = myAvailablePlayers;
 
-		if (numPlayers < 20 || numPlayers < myNumComputeTasks)
+		MutexLock lock(myLock);
+
+		if (myCacheResultPlayer != nullptr && myCacheResultPlayer->myPlayerId == aPlayerId)
 		{
-			ComputeDistRange(*playerToMatch, playerToMatchIndex, 0, numPlayers, results);
-			std::sort(results.myResults, results.myResults + results.myCount, MatchComp);
-			if (results.myCount > 20)
-			{
-				results.myCount = 20;
-			}
+			++myCacheHitCount;
+			//if((myCacheHitCount % 10) == 0)
+			//	printf("\n\t\t\t ==================> Cache hits : %u\n\n", myCacheHitCount);
 		}
 		else
 		{
-			size_t nbItemPerThread = numPlayers / myNumComputeTasks;
-			size_t itemIndex = 0;
-			for (size_t i = 0; i < myNumComputeTasks; ++i)
+			size_t playerToMatchIndex;
+			const Player* playerToMatch = FindPlayer(aPlayerId, playerToMatchIndex);
+
+			if (!playerToMatch)
+				return false;
+
+			size_t numPlayers = myAvailablePlayers;
+
+			if (numPlayers < 20 || numPlayers < myNumComputeTasks)
 			{
-				ComputeTaskArg& arg = myComputeTaskArgs[i];
-				arg.InitComputeTask(playerToMatch, playerToMatchIndex, itemIndex, (i + 1) == myNumComputeTasks ? numPlayers : itemIndex + nbItemPerThread);
-				itemIndex += nbItemPerThread;
-			}
-
-			StartTasks(myNumComputeTasks);
-
-			DWORD waitResult = WaitForSingleObject(myComputeTaskDoneEvent, INFINITE);
-
-			for (size_t taskIndex = 1; taskIndex < myNumComputeTasks && results.myCount < 20; ++taskIndex)
-			{
-				MatchedResult& resultsToMerge = myComputeResults[taskIndex];
-				while (resultsToMerge.myCount > 0 && results.myCount < 20)
+				ComputeDistRange(*playerToMatch, playerToMatchIndex, 0, numPlayers, results);
+				std::sort(results.myResults, results.myResults + results.myCount, MatchComp);
+				if (results.myCount > 20)
 				{
-					--resultsToMerge.myCount;
-					results.myResults[results.myCount] = resultsToMerge.myResults[resultsToMerge.myCount];
-					++results.myCount;
+					results.myCount = 20;
 				}
+				myCacheResultPlayer = playerToMatch;
 			}
-
-			std::sort(results.myResults, results.myResults + results.myCount, MatchComp);
-
-			if (results.myCount > 20)
+			else
 			{
-				results.myCount = 20;
+				size_t nbItemPerThread = numPlayers / myNumComputeTasks;
+				size_t itemIndex = 0;
+				for (size_t i = 0; i < myNumComputeTasks; ++i)
+				{
+					ComputeTaskArg& arg = myComputeTaskArgs[i];
+					arg.InitComputeTask(playerToMatch, playerToMatchIndex, itemIndex, (i + 1) == myNumComputeTasks ? numPlayers : itemIndex + nbItemPerThread);
+					itemIndex += nbItemPerThread;
+				}
 
-				for (size_t taskIndex = 1; taskIndex < myNumComputeTasks; ++taskIndex)
+				StartTasks(myNumComputeTasks);
+
+				DWORD waitResult = WaitForSingleObject(myComputeTaskDoneEvent, INFINITE);
+
+				for (size_t taskIndex = 1; taskIndex < myNumComputeTasks && results.myCount < 20; ++taskIndex)
 				{
 					MatchedResult& resultsToMerge = myComputeResults[taskIndex];
-
-					while (resultsToMerge.myCount > 0)
+					while (resultsToMerge.myCount > 0 && results.myCount < 20)
 					{
 						--resultsToMerge.myCount;
-						Matched& itemToMerge = resultsToMerge.myResults[resultsToMerge.myCount];
+						results.myResults[results.myCount] = resultsToMerge.myResults[resultsToMerge.myCount];
+						++results.myCount;
+					}
+				}
 
-						int index = -1;
-						for (int j = 19; j >= 0; --j)
+				std::sort(results.myResults, results.myResults + results.myCount, MatchComp);
+
+				if (results.myCount > 20)
+				{
+					results.myCount = 20;
+
+					for (size_t taskIndex = 1; taskIndex < myNumComputeTasks; ++taskIndex)
+					{
+						MatchedResult& resultsToMerge = myComputeResults[taskIndex];
+
+						while (resultsToMerge.myCount > 0)
 						{
-							if (results.myResults[j].myDist <= itemToMerge.myDist)
-								break;
+							--resultsToMerge.myCount;
+							Matched& itemToMerge = resultsToMerge.myResults[resultsToMerge.myCount];
 
-							index = j;
+							int index = -1;
+							for (int j = 19; j >= 0; --j)
+							{
+								if (results.myResults[j].myDist <= itemToMerge.myDist)
+									break;
+
+								index = j;
+							}
+
+							if (index == -1)
+								continue;
+
+							for (int j = 19; j > index; --j)
+							{
+								results.myResults[j] = results.myResults[j - 1];
+							}
+
+							results.myResults[index] = itemToMerge;
 						}
-
-						if (index == -1)
-							continue;
-
-						for (int j = 19; j > index; --j)
-						{
-							results.myResults[j] = results.myResults[j - 1];
-						}
-
-						results.myResults[index] = itemToMerge;
 					}
 				}
 			}
+
+			myCacheResultPlayer = playerToMatch;
 		}
 
 		aOutNumPlayerIds = (int)results.myCount;

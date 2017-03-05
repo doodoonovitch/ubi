@@ -177,6 +177,9 @@ private:
 	size_t				myFindTaskPlayerIndex;		// find task result : found player index
 	bool				myFindTaskPlayerFound;		// find task result : player found
 
+	const Player*		myCacheResultPlayer;
+	size_t				myCacheHitCount;
+
 	Mutex				myLock; 
 	size_t				myNumPlayers; 
 	size_t				myAvailablePlayers;
