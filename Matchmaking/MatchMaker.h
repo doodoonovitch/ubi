@@ -69,6 +69,7 @@ private:
 	public:
 
 		Player()
+			: myPlayerId(0)
 		{ }
 
 		~Player()
@@ -82,9 +83,9 @@ private:
 			memcpy(myPreferenceVector, aPreferenceVector, sizeof(Preference[20]));
 		}
 
-		unsigned int	myPlayerId; 
+		unsigned int	myPlayerId;
 		Preference		myPreferenceVector[20];
-		bool			myIsAvailable; 
+		bool			myIsAvailable;
 	};
 
 	class ComputeTaskArg
@@ -152,6 +153,7 @@ private:
 
 	Mutex				myLock; 
 	size_t				myNumPlayers; 
+	size_t				myAvailablePlayers;
 	Player				myPlayers[MAX_NUM_PLAYERS]; 
 
 						MatchMaker(); 

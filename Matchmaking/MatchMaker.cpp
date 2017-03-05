@@ -77,6 +77,7 @@
 
 	MatchMaker::MatchMaker()
 		: myNumPlayers(0)
+		, myAvailablePlayers(0)
 		, myComputeTaskArgIndex(0)
 		, myComputeTaskDoneCounter(0)
 	{
@@ -89,7 +90,7 @@
 				myDistCache[i][j] = v;
 			}
 		}
-
+		
 		myNumComputeTasks = std::thread::hardware_concurrency();
 		printf("Number of threads : %u\n", myNumComputeTasks);
 
@@ -141,10 +142,9 @@
 
 		for (aOutPlayerIndex = 0; iterPlayers < endPlayers; ++iterPlayers, ++aOutPlayerIndex)
 		{
-			Player const * p = iterPlayers;
-			if (p->myPlayerId == aPlayerId)
+			if (iterPlayers->myPlayerId == aPlayerId)
 			{
-				return (Player *)p;
+				return (Player *)iterPlayers;
 			}
 		}
 
@@ -184,7 +184,7 @@
 		++myNumPlayers; 
 
 		if (myNumPlayers % 100 == 0)
-			printf("************ num players in system %u ********\n", myNumPlayers);
+			printf("************ num available players in system %u / %u ********\n", myAvailablePlayers, myNumPlayers);
 
 
 		return true; 
@@ -200,7 +200,15 @@
 		Player* p = FindPlayer(aPlayerId, playerIndex);
 		if (p != nullptr)
 		{
-			p->myIsAvailable = true;
+			if (!p->myIsAvailable)
+			{
+				p->myIsAvailable = true;
+				if (playerIndex > myAvailablePlayers)
+				{
+					std::swap(myPlayers[playerIndex], myPlayers[myAvailablePlayers]);
+				}
+				++myAvailablePlayers;
+			}
 			return true;
 		}
 
@@ -217,7 +225,15 @@
 		Player* p = FindPlayer(aPlayerId, playerIndex);
 		if (p != nullptr)
 		{
-			p->myIsAvailable = false;
+			if (p->myIsAvailable)
+			{
+				p->myIsAvailable = false;
+				if ((playerIndex + 1) < myAvailablePlayers)
+				{
+					std::swap(myPlayers[playerIndex], myPlayers[myAvailablePlayers - 1]);
+				}
+				--myAvailablePlayers;
+			}
 			return true;
 		}
 
@@ -253,7 +269,7 @@
 			return false; 
 
 		MatchedResult& results = myComputeResults[0];
-		size_t numPlayers = myNumPlayers;
+		size_t numPlayers = myAvailablePlayers;
 
 		if (numPlayers < 20 || numPlayers < myNumComputeTasks)
 		{
@@ -347,13 +363,10 @@
 	{
 		aOutResults.myCount = 0;
 
-		const Player* end = myPlayers + aEndIndex;
+		const Player* iterEnd = myPlayers + aEndIndex;
 		const Player* player = myPlayers + aBeginIndex;
-		for (size_t iter = aBeginIndex; iter < aEndIndex; ++iter, ++player)
+		for (; player < iterEnd; ++player)
 		{
-			if (!player->myIsAvailable)
-				continue;
-
 			Matched& target = aOutResults.myResults[aOutResults.myCount];
 			++aOutResults.myCount;
 
