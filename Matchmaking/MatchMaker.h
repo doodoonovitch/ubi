@@ -95,21 +95,38 @@ private:
 		enum class ETaskType
 		{
 			Compute,
+			Find,
 			Exit
 		};
 
-		const Player*	myPlayerToMatch;
-		size_t			myPlayerToMatchIndex;
+		union
+		{
+			struct FindDataType
+			{
+				unsigned int	myPlayerId;
+			} myFindTask;
+			struct ComputeDataType
+			{
+				const Player*	myPlayerToMatch;
+				size_t			myPlayerToMatchIndex;
+			} myComputeTask;
+		} myUnion;
+
 		size_t			myBeginIndex;
 		size_t			myEndIndex;
+
 		ETaskType		myTaskType;
 
-		void			Reset(
+		void			InitComputeTask(
 							const Player*	aPlayerToMatch,
 							size_t			aPlayerToMatchIndex,
 							size_t			aBeginIndex,
-							size_t			aEndIndex,
-							ETaskType		aTaskType);
+							size_t			aEndIndex);
+
+		void			InitFindTask(
+							unsigned int	aPlayerId,
+							size_t			aBeginIndex,
+							size_t			aEndIndex);
 	};
 
 	static void			TaskHandler(
@@ -126,6 +143,12 @@ private:
 							size_t			aEndIndex,
 							MatchedResult&	aOutResults);
 
+	Player*				FindPlayerRange(
+							unsigned int	aPlayerId,
+							size_t			aBeginIndex,
+							size_t			aEndIndex,
+							size_t&			aOutPlayerIndex);
+
 	int					Dist(
 		const Preference aA[20],
 		const Preference aB[20]) const;
@@ -139,7 +162,7 @@ private:
 
 	Player*				FindPlayer(
 							unsigned int	aPlayerId,
-							size_t&			aOutPlayerIndex) const;
+							size_t&			aOutPlayerIndex);
 
 	int					myDistCache[256][256];
 	MatchedResult*		myComputeResults;
@@ -150,6 +173,9 @@ private:
 	volatile LONG 		myComputeTaskDoneCounter;	// count of executed tasks
 	HANDLE				myRunComputeTaskSem;		// available tasks to execute (semaphore)
 	HANDLE				myComputeTaskDoneEvent;		// all tasks has been done
+	Player*				myFindTaskPlayer;			// find task result : found player 
+	size_t				myFindTaskPlayerIndex;		// find task result : found player index
+	bool				myFindTaskPlayerFound;		// find task result : player found
 
 	Mutex				myLock; 
 	size_t				myNumPlayers; 

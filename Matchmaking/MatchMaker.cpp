@@ -10,19 +10,31 @@
 
 
 	void
-	MatchMaker::ComputeTaskArg::Reset(
+	MatchMaker::ComputeTaskArg::InitComputeTask(
 		const Player*	aPlayerToMatch,
 		size_t			aPlayerToMatchIndex,
 		size_t			aBeginIndex,
-		size_t			aEndIndex,
-		ETaskType		aTaskType)
+		size_t			aEndIndex)
 	{
-		myPlayerToMatch = aPlayerToMatch;
-		myPlayerToMatchIndex = aPlayerToMatchIndex;
+		myUnion.myComputeTask.myPlayerToMatch = aPlayerToMatch;
+		myUnion.myComputeTask.myPlayerToMatchIndex = aPlayerToMatchIndex;
 		myBeginIndex = aBeginIndex;
 		myEndIndex = aEndIndex;
-		myTaskType = aTaskType;
+		myTaskType = ETaskType::Compute;
 	}
+
+	void
+	MatchMaker::ComputeTaskArg::InitFindTask(
+		unsigned int	aPlayerId,
+		size_t			aBeginIndex,
+		size_t			aEndIndex)
+	{
+		myUnion.myFindTask.myPlayerId = aPlayerId;
+		myBeginIndex = aBeginIndex;
+		myEndIndex = aEndIndex;
+		myTaskType = ETaskType::Find;
+	}
+
 
 	void
 	MatchMaker::TaskHandler(
@@ -46,13 +58,28 @@
 
 				ComputeTaskArg& arg = myComputeTaskArgs[taskIndex];
 
-				if (arg.myTaskType == ComputeTaskArg::ETaskType::Compute)
+				switch (arg.myTaskType)
 				{
-					ComputeDistRange(*arg.myPlayerToMatch, arg.myPlayerToMatchIndex, arg.myBeginIndex, arg.myEndIndex, myComputeResults[taskIndex]);
-				}
-				else if(arg.myTaskType == ComputeTaskArg::ETaskType::Exit)
-				{
+				case ComputeTaskArg::ETaskType::Compute:
+					ComputeDistRange(*arg.myUnion.myComputeTask.myPlayerToMatch, arg.myUnion.myComputeTask.myPlayerToMatchIndex, arg.myBeginIndex, arg.myEndIndex, myComputeResults[taskIndex]);
+					break;
+
+				case ComputeTaskArg::ETaskType::Find:
+					{
+						size_t index;
+						Player* player = FindPlayerRange(arg.myUnion.myFindTask.myPlayerId, arg.myBeginIndex, arg.myEndIndex, index);
+						if (player != nullptr)
+						{
+							myFindTaskPlayer = player;
+							myFindTaskPlayerIndex = index;
+							myFindTaskPlayerFound = true;
+						}
+					}
+					break;
+
+				case ComputeTaskArg::ETaskType::Exit:
 					end = true;
+					break;
 				}
 
 				LONG counter = InterlockedDecrement(&myComputeTaskDoneCounter);
@@ -80,6 +107,9 @@
 		, myAvailablePlayers(0)
 		, myComputeTaskArgIndex(0)
 		, myComputeTaskDoneCounter(0)
+		, myFindTaskPlayer(nullptr)
+		, myFindTaskPlayerIndex(MAX_NUM_PLAYERS)
+		, myFindTaskPlayerFound(false)
 	{
 		for (int i = 0; i < 256; ++i)
 		{
@@ -135,16 +165,48 @@
 	MatchMaker::Player*
 	MatchMaker::FindPlayer(
 			unsigned int	aPlayerId,
-			size_t&			aOutPlayerIndex) const
+			size_t&			aOutPlayerIndex) 
 	{
-		Player const * iterPlayers = myPlayers;
-		Player const * endPlayers = myPlayers + myNumPlayers;
-
-		for (aOutPlayerIndex = 0; iterPlayers < endPlayers; ++iterPlayers, ++aOutPlayerIndex)
+		if (myFindTaskPlayer != nullptr && myFindTaskPlayer->myPlayerId == aPlayerId)
 		{
-			if (iterPlayers->myPlayerId == aPlayerId)
+			aOutPlayerIndex = myFindTaskPlayerIndex;
+			return myFindTaskPlayer;
+		}
+
+		size_t numPlayers = myNumPlayers;
+
+		if (numPlayers < 20 || numPlayers < myNumComputeTasks)
+		{
+			Player* player = FindPlayerRange(aPlayerId, 0, numPlayers, aOutPlayerIndex);
+			if (player != nullptr)
 			{
-				return (Player *)iterPlayers;
+				myFindTaskPlayer = player;
+				myFindTaskPlayerIndex = aOutPlayerIndex;
+			}
+
+			return player;
+		}
+		else
+		{
+			size_t nbItemPerThread = numPlayers / myNumComputeTasks;
+			size_t itemIndex = 0;
+			for (size_t i = 0; i < myNumComputeTasks; ++i)
+			{
+				ComputeTaskArg& arg = myComputeTaskArgs[i];
+				arg.InitFindTask(aPlayerId, itemIndex, (i + 1) == myNumComputeTasks ? numPlayers : itemIndex + nbItemPerThread);
+				itemIndex += nbItemPerThread;
+			}
+
+			myFindTaskPlayerFound = false;
+
+			StartTasks(myNumComputeTasks);
+
+			DWORD waitResult = WaitForSingleObject(myComputeTaskDoneEvent, INFINITE);
+
+			if (myFindTaskPlayerFound)
+			{
+				aOutPlayerIndex = myFindTaskPlayerIndex;
+				return myFindTaskPlayer;
 			}
 		}
 
@@ -287,7 +349,7 @@
 			for (size_t i = 0; i < myNumComputeTasks; ++i)
 			{
 				ComputeTaskArg& arg = myComputeTaskArgs[i];
-				arg.Reset(playerToMatch, playerToMatchIndex, itemIndex, (i + 1) == myNumComputeTasks ? numPlayers : itemIndex + nbItemPerThread, ComputeTaskArg::ETaskType::Compute);
+				arg.InitComputeTask(playerToMatch, playerToMatchIndex, itemIndex, (i + 1) == myNumComputeTasks ? numPlayers : itemIndex + nbItemPerThread);
 				itemIndex += nbItemPerThread;
 			}
 
@@ -384,5 +446,27 @@
 
 		//std::sort(aOutResults.myResults, aOutResults.myResults + aOutResults.myCount, MatchComp);
 	}
+
+	MatchMaker::Player*
+	MatchMaker::FindPlayerRange(
+		unsigned int	aPlayerId,
+		size_t			aBeginIndex,
+		size_t			aEndIndex,
+		size_t&			aOutPlayerIndex)
+	{
+		aOutPlayerIndex = aBeginIndex;
+		Player* iterEnd = myPlayers + aEndIndex;
+		Player* player = myPlayers + aBeginIndex;
+		for (; !myFindTaskPlayerFound && player < iterEnd; ++player, ++aOutPlayerIndex)
+		{
+			if (player->myPlayerId == aPlayerId)
+			{
+				return player;
+			}
+		}
+
+		return nullptr;
+	}
+
 
 
