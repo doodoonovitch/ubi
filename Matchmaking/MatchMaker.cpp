@@ -337,8 +337,8 @@
 		if (myCacheResultPlayer != nullptr && myCacheResultPlayer->myPlayerId == aPlayerId)
 		{
 			++myCacheHitCount;
-			//if((myCacheHitCount % 10) == 0)
-			//	printf("\n\t\t\t ==================> Cache hits : %u\n\n", myCacheHitCount);
+			if((myCacheHitCount % 10) == 0)
+				printf("\n\t\t\t ==================> Cache hits : %u\n\n", myCacheHitCount);
 		}
 		else
 		{
@@ -448,21 +448,21 @@
 
 		const Player* iterEnd = myPlayers + aEndIndex;
 		const Player* player = myPlayers + aBeginIndex;
+		Matched * target = &aOutResults.myResults[aOutResults.myCount];
 		for (; player < iterEnd; ++player)
 		{
-			Matched& target = aOutResults.myResults[aOutResults.myCount];
-			++aOutResults.myCount;
-
-			target.myId = player->myPlayerId;
+			target->myId = player->myPlayerId;
 
 			if (player == &aPlayerToMatch)
 			{
-				target.myDist = 0;
+				target->myDist = 0;
 			}
 			else
 			{
-				target.myDist = Dist(aPlayerToMatch.myPreferenceVector, player->myPreferenceVector);
+				target->myDist = Dist(aPlayerToMatch.myPreferenceVector, player->myPreferenceVector);
 			}
+			++aOutResults.myCount;
+			++target;
 		}
 
 		//std::sort(aOutResults.myResults, aOutResults.myResults + aOutResults.myCount, MatchComp);
